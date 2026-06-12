@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>परामर्श शुल्क रसीद — Consultation Fee Receipt</title>
+<style>
+@page {
+  size: A4 portrait;
+  margin: 12mm 15mm;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Noto Serif', 'Times New Roman', serif;
+  font-size: 10.5pt;
+  color: #000;
+  line-height: 1.6;
+  background: #fff;
+  padding: 14mm 16mm;
+}
+@media print {
+  body { padding: 0; margin: 0; }
+}
+
+.doc-header {
+  text-align: center;
+  border-bottom: 3px double #000;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+.doc-logo {
+  width: 140px; height: auto;
+  display: block; margin: 0 auto 6px;
+}
+.doc-owner   { font-size: 10pt; font-weight: bold; margin: 2px 0; }
+.doc-title-hi { font-size: 15pt; font-weight: bold; margin: 4px 0; }
+.doc-title-en { font-size: 12pt; font-weight: bold; }
+.doc-subtitle { font-size: 9pt; font-style: italic; }
+
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+  table-layout: fixed;
+  word-break: break-word;
+}
+.doc-table td,
+.doc-table th {
+  border: 1px solid #444;
+  padding: 5px 8px;
+  font-size: 10pt;
+  vertical-align: top;
+  word-break: break-word;
+  line-height: 1.5;
+}
+.doc-table th {
+  background: #eee;
+  font-weight: bold;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.field-line      { display: inline-block; border-bottom: 1px solid #000; min-width: 150px; vertical-align: bottom; }
+.field-line-long { display: inline-block; border-bottom: 1px solid #000; min-width: 240px; vertical-align: bottom; }
+
+.section-head {
+  font-size: 11.5pt;
+  font-weight: bold;
+  margin: 12px 0 4px;
+  border-bottom: 1.5px solid #333;
+  padding-bottom: 2px;
+}
+.para { margin: 5px 0; line-height: 1.6; text-align: justify; font-size: 10pt; }
+
+.sig-table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
+.sig-table td { width: 50%; padding: 6px 12px; vertical-align: top; font-size: 10pt; border: none; line-height: 1.8; }
+.sig-box { border-top: 1px solid #000; margin-top: 44px; padding-top: 4px; font-size: 10pt; }
+
+.purpose-box { border: 1px solid #666; padding: 7px 12px; margin: 8px 0; border-radius: 2px; }
+.purpose-box ol { margin-left: 18px; }
+.purpose-box li { margin: 4px 0; line-height: 1.55; font-size: 10pt; }
+.footer-note {
+  font-size: 9pt;
+  text-align: center;
+  font-style: italic;
+  border-top: 1px solid #aaa;
+  padding-top: 7px;
+  margin-top: 14px;
+}
+</style>
+</head>
+<body>
+
+  <div class="doc-header">
+    <img src="logo.jpg" class="doc-logo" alt="Ruralift">
+    <div class="doc-owner">स्वामी: Shaan Singh Bilhatiya | Udyam: UDYAM-MP-29-0021193</div>
+    <div class="doc-title-hi">परामर्श शुल्क रसीद</div>
+    <div class="doc-title-en">Consultation Fee Receipt</div>
+    <div class="doc-subtitle">(प्रारंभिक परामर्श / प्रथम मुलाकात शुल्क — केवल समय एवं परामर्श हेतु)</div>
+  </div>
+
+  <p class="para"><strong>रसीद नं. (Receipt No.):</strong> <span id="pr-receiptNo" class="field-line"></span></p>
+  <p class="para">
+    <strong>दिनांक (Date):</strong> <span id="pr-date" class="field-line"></span>
+    &nbsp;&nbsp;&nbsp;
+    <strong>स्थान:</strong> <span id="pr-place" class="field-line"></span>
+  </p>
+
+  <div class="section-head">ग्राहक विवरण (Client Details)</div>
+  <p class="para"><strong>ग्राहक का नाम (Name):</strong> <span id="pr-name" class="field-line-long"></span></p>
+  <p class="para"><strong>मोबाइल (Mobile):</strong> <span id="pr-mobile" class="field-line"></span></p>
+  <p class="para"><strong>आधार नं. (Aadhaar No.):</strong> <span id="pr-aadhaar" class="field-line-long"></span></p>
+
+  <div class="section-head">शुल्क विवरण (Fee Details)</div>
+  <table class="doc-table">
+    <colgroup><col style="width:58%"><col style="width:42%"></colgroup>
+    <tr><th>विवरण</th><th>राशि</th></tr>
+    <tr><td>प्रारंभिक परामर्श / प्रथम मुलाकात शुल्क</td><td><strong>रु. 500/- (रुपये पाँच सौ मात्र)</strong></td></tr>
+    <tr><td>भुगतान का माध्यम (Mode)</td><td><span id="pr-payMode"></span></td></tr>
+    <tr><td>भुगतान संदर्भ / UTR</td><td><span id="pr-utr"></span></td></tr>
+    <tr><td><strong>कुल प्राप्त (Total Received)</strong></td><td><strong>रु. 500/-</strong></td></tr>
+  </table>
+
+  <div class="section-head">यह शुल्क क्यों लिया जाता है (Purpose of this Fee)</div>
+  <div class="purpose-box">
+    <ol>
+      <li>यह रु. 500/- का शुल्क पूर्णतः एवं केवल Ruralift द्वारा प्रथम मुलाकात/परामर्श बैठक में दिए गए <strong>समय एवं परामर्श (Time &amp; Consultancy)</strong> के प्रतिफल में है — जिसमें ग्राहक की ऋण पात्रता का आकलन, उपयुक्त विकल्पों पर मार्गदर्शन एवं प्रश्नों का समाधान शामिल है।</li>
+      <li>यह शुल्क सभी ग्राहकों पर <strong>समान रूप से (निश्चित रु. 500/-)</strong> लागू होता है। यह किसी ऋण की स्वीकृति, राशि या वितरण की कोई गारंटी नहीं है।</li>
+      <li>चूँकि यह केवल समय एवं परामर्श का मूल्य है, यह शुल्क <strong>अप्रतिदेय (Non-Refundable)</strong> है — ऋण स्वीकृत हो अथवा न हो।</li>
+      <li>यह प्रारंभिक परामर्श शुल्क ऋण के सफल वितरण पर देय <strong>सफलता-आधारित परामर्श शुल्क</strong> तथा ऋण संस्थान द्वारा दिए जाने वाले किसी भी DSA/कमीशन से पूर्णतः <strong>पृथक एवं स्वतंत्र</strong> है।</li>
+      <li>इस शुल्क के अतिरिक्त, ऋण वितरण से पूर्व किसी भी चरण में कोई अन्य शुल्क या प्रसंस्करण शुल्क नहीं लिया जाता।</li>
+    </ol>
+  </div>
+
+  <table class="sig-table" style="margin-top:30px">
+    <tr>
+      <td width="50%">
+        <strong>Ruralift की ओर से (प्राप्तकर्ता)</strong>
+        <div class="sig-box"></div>
+        <div>नाम: Shaan Singh Bilhatiya</div>
+        <div>(हस्ताक्षर / Signature)</div>
+        <br>
+        <div>दिनांक: _____ / _____ / __________</div>
+      </td>
+      <td width="50%">
+        <strong>ग्राहक की स्वीकृति</strong>
+        <div class="sig-box"></div>
+        <div>नाम: <span id="pr-sig-name"></span></div>
+        <div>(हस्ताक्षर / Signature)</div>
+        <br>
+        <div>दिनांक: _____ / _____ / __________</div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="footer-note">यह एक कंप्यूटर-जनित रसीद है। ग्राहक इस रसीद की एक प्रति प्राप्त करने की पुष्टि करता/करती है।<br><em>— रसीद समाप्त / End of Receipt —</em></div>
+
+<script>
+(function() {
+  var params = new URLSearchParams(window.location.search);
+
+  function set(id, key) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = params.get(key) || '';
+  }
+
+  set('pr-receiptNo', 'receiptNo');
+  set('pr-date', 'date');
+  set('pr-place', 'place');
+  set('pr-name', 'name');
+  set('pr-mobile', 'mobile');
+  set('pr-aadhaar', 'aadhaar');
+  set('pr-payMode', 'payMode');
+  set('pr-utr', 'utr');
+  set('pr-sig-name', 'name');
+
+  // Auto-print after a short delay to let content render
+  setTimeout(function() { window.print(); }, 400);
+})();
+</script>
+</body>
+</html>

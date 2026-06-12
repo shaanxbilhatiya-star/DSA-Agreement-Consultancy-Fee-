@@ -1,0 +1,33 @@
+{
+  "id": "FEAT-001",
+  "type": "feat",
+  "description": "Extract print templates into separate HTML files, fix print alignment, and update the CRM to use the new templates - all as one cohesive change.",
+  "status": "in_progress",
+  "steps": [
+    "Step 1: Create public/receipt.html - A standalone HTML file containing the Consultation Fee Receipt (parashmrsh shulk raseed). Copy the EXACT content from the #print-receipt div in public/index.html. The HTML file must: (a) be a complete standalone HTML page with proper DOCTYPE, head, charset, (b) include all the print-area CSS styles inline for proper rendering, (c) keep every Hindi/English word EXACTLY as-is from the existing template, (d) use JavaScript at the bottom that reads URL query parameters (or receives data via window.opener/postMessage) to fill the span fields (pr-receiptNo, pr-date, pr-place, pr-name, pr-mobile, pr-aadhaar, pr-payMode, pr-utr, pr-sig-name), (e) leave signature sections blank for physical signing, (f) auto-trigger window.print() after fields are filled, (g) reference logo.jpg (same directory), (h) fix print alignment: use proper @page margins (12mm top/bottom, 15mm left/right), ensure table columns don't overflow, use appropriate font sizes for A4 printing.",
+    "Step 2: Create public/agreement.html - A standalone HTML file containing BOTH the Loan Agreement AND the PDC Receipt (they print together with a page-break between them). Copy the EXACT content from the #print-agreement div in public/index.html. The HTML file must: (a) be a complete standalone HTML page, (b) include all print-area CSS styles inline, (c) keep every Hindi/English word EXACTLY as-is, (d) use JavaScript to read URL query parameters to fill all span fields (ag-name, ag-aadhaar, ag-address, ag-mobile, ag-loanAmt, ag-loanAmtWords, ag-date, ag-place, ag-successFee, ag-successFeeWords, ag-chequeNo, ag-chequeBankBranch, ag-chequeHolder, ag-chequeAmt, ag-chequeDate, ag-decl-name, ag-sig-name, ag-sig-aadhaar, pdc-date, pdc-name, pdc-mobile, pdc-aadhaar, pdc-chequeNo, pdc-chequeBankBranch, pdc-chequeAmt, pdc-chequeDate, pdc-receipt-date, pdc-sig-name), (e) leave ALL signature/thumb impression areas blank, (f) auto-trigger window.print() after filling, (g) reference logo.jpg, (h) include the page-break div between agreement and PDC receipt, (i) fix print alignment: proper @page margins, table-layout: fixed with appropriate column widths, prevent content overflow, ensure readable font sizes on A4.",
+    "Step 3: Update the printReceipt() and printAgreement() functions in public/index.html to open the new template files in a new window/tab, passing customer data as URL query parameters. The new approach: (a) Build a query string from customer object fields, (b) Use window.open('receipt.html?' + params, '_blank') or window.open('agreement.html?' + params, '_blank'), (c) Keep the existing embedded print areas as fallback OR remove them since the separate files replace them - remove the embedded #print-receipt and #print-agreement divs and their associated @media print CSS that hides everything, since the new separate HTML files handle printing independently.",
+    "Step 4: Fix the print CSS in both new HTML template files to ensure clean A4 output: (a) @page { size: A4 portrait; margin: 12mm 15mm; } for balanced margins, (b) All .doc-table use table-layout: fixed with explicit column widths and word-wrap: break-word, (c) .sig-table cells get proper width: 50% and adequate padding, (d) Font sizes: body 10.5pt, headings 11-15pt, table cells 10pt - ensuring readability without overflow, (e) Remove any padding/margin on body for print so @page margin is the only spacing, (f) Ensure .page-break works correctly with break-before: page, (g) Test that no content is clipped at edges."
+  ],
+  "acceptance_criteria": [
+    "public/receipt.html exists as a standalone, valid HTML file containing the exact same wording as the original #print-receipt section",
+    "public/agreement.html exists as a standalone, valid HTML file containing the exact same wording as the original #print-agreement section (including PDC receipt)",
+    "Both template files accept customer data via URL query parameters and auto-fill all data fields",
+    "Signature and thumb impression areas remain blank in both templates",
+    "The printReceipt() and printAgreement() functions in index.html now open the separate template files",
+    "Print output is properly aligned for A4 with correct margins, no overflow, readable fonts",
+    "server.js still serves all files correctly from /public (no changes needed since Express static middleware handles it)",
+    "The CRM main page (index.html) still functions correctly for all CRUD operations"
+  ],
+  "verification": [
+    "Run 'npm install' in /projects/sandbox/Reception-CRM to confirm dependencies install",
+    "Run 'node -e \"const app = require('./server.js')\"' or start the server briefly to confirm no syntax errors",
+    "Verify public/receipt.html exists and is valid HTML (check for DOCTYPE, closing tags)",
+    "Verify public/agreement.html exists and is valid HTML",
+    "Verify that the word content in receipt.html matches the original #print-receipt exactly",
+    "Verify that the word content in agreement.html matches the original #print-agreement exactly",
+    "Verify index.html printReceipt/printAgreement functions use window.open with query params"
+  ],
+  "blocked_reason": null,
+  "findings": ""
+}
