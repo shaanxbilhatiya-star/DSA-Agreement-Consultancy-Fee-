@@ -162,19 +162,21 @@ textarea { resize: vertical; min-height: 70px; }
   font-family: 'Times New Roman', serif;
   font-size: 11pt;
   color: #000;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 .print-area .doc-header {
   text-align: center;
   border-bottom: 3px double #000;
   padding-bottom: 10px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 .print-area .doc-logo { width: 160px; margin-bottom: 6px; display: block; margin-left: auto; margin-right: auto; }
 .print-area .doc-owner { font-size: 10.5pt; font-weight: bold; margin: 2px 0; }
 .print-area .doc-title-hi { font-size: 15pt; font-weight: bold; margin: 4px 0; }
 .print-area .doc-title-en { font-size: 12pt; font-weight: bold; }
 .print-area .doc-subtitle { font-size: 9.5pt; font-style: italic; }
+
+/* Generic bordered table */
 .print-area .doc-table {
   width: 100%;
   border-collapse: collapse;
@@ -185,39 +187,121 @@ textarea { resize: vertical; min-height: 70px; }
 .print-area .doc-table td,
 .print-area .doc-table th {
   border: 1px solid #555;
-  padding: 5px 8px;
+  padding: 6px 9px;
   font-size: 10.5pt;
-  vertical-align: top;
+  vertical-align: middle;
   word-wrap: break-word;
 }
-.print-area .doc-table th { background: #eee; font-weight: bold; text-align: left; }
-.print-area .field-line { display: inline-block; border-bottom: 1px solid #000; min-width: 160px; }
-.print-area .field-line-long { display: inline-block; border-bottom: 1px solid #000; min-width: 260px; }
-.print-area .section-head {
-  font-size: 12pt;
+.print-area .doc-table th {
+  background: #eee;
   font-weight: bold;
-  margin: 12px 0 5px;
+  text-align: left;
+}
+
+/* Field underlines — values filled from JS */
+.print-area .fl {
+  display: inline-block;
+  border-bottom: 1.2px solid #000;
+  min-width: 180px;
+  min-height: 16px;
+  vertical-align: bottom;
+  padding-bottom: 1px;
+}
+.print-area .fl-sm  { min-width: 110px; }
+.print-area .fl-md  { min-width: 200px; }
+.print-area .fl-lg  { min-width: 280px; }
+.print-area .fl-xl  { min-width: 100%; display: block; margin-top: 2px; }
+
+/* Parties table — first col label, second col value */
+.print-area .parties-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+.print-area .parties-table td {
+  border: 1px solid #555;
+  padding: 7px 10px;
+  font-size: 10.5pt;
+  vertical-align: top;
+}
+.print-area .parties-table .lbl-col { width: 28%; font-weight: bold; background: #f5f5f5; white-space: nowrap; }
+.print-area .parties-table .val-col { width: 72%; }
+.print-area .parties-table .val-col .row-line {
+  display: block;
+  padding: 2px 0 4px;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 4px;
+  line-height: 1.7;
+}
+.print-area .parties-table .val-col .row-line:last-child { border-bottom: none; margin-bottom: 0; }
+
+/* Section heading */
+.print-area .section-head {
+  font-size: 11.5pt;
+  font-weight: bold;
+  margin: 14px 0 5px;
   border-bottom: 1.5px solid #333;
   padding-bottom: 2px;
   page-break-after: avoid;
 }
-.print-area .para { margin: 5px 0; line-height: 1.55; text-align: justify; }
-.print-area .sig-table { width: 100%; border-collapse: collapse; margin-top: 18px; }
-.print-area .sig-table td { padding: 8px 12px; vertical-align: top; font-size: 10.5pt; width: 50%; }
-.print-area .sig-box { border-top: 1px solid #000; margin-top: 38px; padding-top: 4px; font-size: 10pt; }
+
+.print-area .para { margin: 5px 0; line-height: 1.6; text-align: justify; }
+
+/* Signature block */
+.print-area .sig-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+.print-area .sig-table td {
+  padding: 8px 14px;
+  vertical-align: top;
+  font-size: 10.5pt;
+  width: 50%;
+  border: 1px solid #ccc;
+}
+.print-area .sig-box {
+  border-top: 1.5px solid #000;
+  margin-top: 44px;
+  padding-top: 5px;
+  font-size: 10pt;
+}
+.print-area .thumb-box {
+  border: 1px solid #999;
+  width: 80px;
+  height: 52px;
+  margin-top: 6px;
+  display: inline-block;
+  text-align: center;
+  font-size: 8pt;
+  color: #888;
+  padding-top: 18px;
+  box-sizing: border-box;
+}
+.print-area .date-line {
+  margin-top: 8px;
+  font-size: 10.5pt;
+}
+
 .print-area .no-border td { border: none; }
 .print-area .page-break { page-break-before: always; margin: 0; padding: 0; height: 0; }
-.print-area .purpose-box { border: 1px solid #777; padding: 8px 12px; margin: 8px 0; }
-.print-area .purpose-box ol { margin-left: 16px; }
-.print-area .purpose-box li { margin: 4px 0; line-height: 1.5; }
+
+/* Purpose box */
+.print-area .purpose-box { border: 1px solid #777; padding: 8px 14px; margin: 8px 0; border-radius: 2px; }
+.print-area .purpose-box ol { margin-left: 18px; }
+.print-area .purpose-box li { margin: 5px 0; line-height: 1.55; }
+
 .print-area .footer-note {
   font-size: 9.5pt;
   text-align: center;
   font-style: italic;
   border-top: 1px solid #aaa;
   padding-top: 7px;
-  margin-top: 12px;
+  margin-top: 14px;
 }
+
+/* PDC detail table — label + value rows */
+.print-area .pdc-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+.print-area .pdc-table td {
+  border: 1px solid #555;
+  padding: 7px 10px;
+  font-size: 10.5pt;
+  vertical-align: middle;
+}
+.print-area .pdc-table .pdc-lbl { width: 40%; font-weight: bold; background: #f5f5f5; }
+.print-area .pdc-table .pdc-val { width: 60%; }
 
 /* ===== ALERT ===== */
 .toast { position: fixed; bottom: 24px; right: 24px; background: var(--navy); color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; }
@@ -491,25 +575,43 @@ textarea { resize: vertical; min-height: 70px; }
     <div class="doc-subtitle">(प्रारंभिक परामर्श / प्रथम मुलाकात शुल्क — केवल समय एवं परामर्श हेतु)</div>
   </div>
 
-  <p class="para"><strong>रसीद नं. (Receipt No.):</strong> <span id="pr-receiptNo" class="field-line"></span></p>
-  <p class="para">
-    <strong>दिनांक (Date):</strong> <span id="pr-date" class="field-line"></span>
-    &nbsp;&nbsp;&nbsp;
-    <strong>स्थान:</strong> <span id="pr-place" class="field-line"></span>
-  </p>
+  <!-- Receipt meta -->
+  <table class="pdc-table" style="margin-bottom:12px">
+    <tr>
+      <td class="pdc-lbl">रसीद नं. (Receipt No.)</td>
+      <td class="pdc-val"><span id="pr-receiptNo" class="fl fl-md"></span></td>
+      <td class="pdc-lbl">दिनांक (Date)</td>
+      <td class="pdc-val"><span id="pr-date" class="fl fl-sm"></span></td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">स्थान (Place)</td>
+      <td class="pdc-val" colspan="3"><span id="pr-place" class="fl fl-md"></span></td>
+    </tr>
+  </table>
 
   <div class="section-head">ग्राहक विवरण (Client Details)</div>
-  <p class="para"><strong>ग्राहक का नाम (Name):</strong> <span id="pr-name" class="field-line-long"></span></p>
-  <p class="para"><strong>मोबाइल (Mobile):</strong> <span id="pr-mobile" class="field-line"></span></p>
-  <p class="para"><strong>आधार नं. (Aadhaar No.):</strong> <span id="pr-aadhaar" class="field-line-long"></span></p>
+  <table class="pdc-table">
+    <tr>
+      <td class="pdc-lbl">ग्राहक का नाम (Name)</td>
+      <td class="pdc-val" colspan="3"><strong><span id="pr-name" class="fl fl-lg"></span></strong></td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">मोबाइल (Mobile)</td>
+      <td class="pdc-val"><span id="pr-mobile" class="fl fl-md"></span></td>
+      <td class="pdc-lbl">आधार नं. (Aadhaar No.)</td>
+      <td class="pdc-val"><span id="pr-aadhaar" class="fl fl-md"></span></td>
+    </tr>
+  </table>
 
   <div class="section-head">शुल्क विवरण (Fee Details)</div>
   <table class="doc-table">
-    <tr><th>विवरण</th><th>राशि</th></tr>
-    <tr><td>प्रारंभिक परामर्श / प्रथम मुलाकात शुल्क</td><td><strong>रु. 500/- (रुपये पाँच सौ मात्र)</strong></td></tr>
-    <tr><td>भुगतान का माध्यम (Mode)</td><td><span id="pr-payMode"></span></td></tr>
-    <tr><td>भुगतान संदर्भ / UTR</td><td><span id="pr-utr"></span></td></tr>
-    <tr><td><strong>कुल प्राप्त (Total Received)</strong></td><td><strong>रु. 500/-</strong></td></tr>
+    <thead><tr><th width="60%">विवरण</th><th width="40%">राशि / जानकारी</th></tr></thead>
+    <tbody>
+      <tr><td>प्रारंभिक परामर्श / प्रथम मुलाकात शुल्क</td><td><strong>रु. 500/- (रुपये पाँच सौ मात्र)</strong></td></tr>
+      <tr><td>भुगतान का माध्यम (Mode of Payment)</td><td><span id="pr-payMode" class="fl fl-md"></span></td></tr>
+      <tr><td>भुगतान संदर्भ / UTR (Reference / UTR No.)</td><td><span id="pr-utr" class="fl fl-md"></span></td></tr>
+      <tr><td><strong>कुल प्राप्त (Total Received)</strong></td><td><strong>रु. 500/-</strong></td></tr>
+    </tbody>
   </table>
 
   <div class="section-head">यह शुल्क क्यों लिया जाता है (Purpose of this Fee)</div>
@@ -523,23 +625,25 @@ textarea { resize: vertical; min-height: 70px; }
     </ol>
   </div>
 
-  <table class="sig-table" style="margin-top:30px">
+  <table class="sig-table" style="margin-top:28px">
     <tr>
       <td width="50%">
         <strong>Ruralift की ओर से (प्राप्तकर्ता)</strong>
-        <div class="sig-box"></div>
-        <div>नाम: Shaan Singh Bilhatiya</div>
-        <div>(हस्ताक्षर / Signature)</div>
-        <br>
-        <div>दिनांक: _____ / _____ / __________</div>
+        <div class="sig-box">
+          <div>नाम: <strong>Shaan Singh Bilhatiya</strong></div>
+          <div>(हस्ताक्षर / Signature)</div>
+        </div>
+        <div class="date-line">दिनांक: _____ / _____ / __________</div>
+        <div class="thumb-box">अंगूठा</div>
       </td>
       <td width="50%">
         <strong>ग्राहक की स्वीकृति</strong>
-        <div class="sig-box"></div>
-        <div>नाम: <span id="pr-sig-name"></span></div>
-        <div>(हस्ताक्षर / Signature)</div>
-        <br>
-        <div>दिनांक: _____ / _____ / __________</div>
+        <div class="sig-box">
+          <div>नाम: <span id="pr-sig-name" class="fl fl-lg"></span></div>
+          <div>(हस्ताक्षर / Signature)</div>
+        </div>
+        <div class="date-line">दिनांक: _____ / _____ / __________</div>
+        <div class="thumb-box">अंगूठा</div>
       </td>
     </tr>
   </table>
@@ -558,26 +662,30 @@ textarea { resize: vertical; min-height: 70px; }
   </div>
 
   <div class="section-head">पक्षकार (इस अनुबंध के पक्ष)</div>
-  <table class="doc-table">
+  <table class="parties-table">
     <tr>
-      <td width="30%"><strong>सेवा प्रदाता</strong></td>
-      <td>Ruralift (MSME/Udyam पंजीकृत स्वामित्व संस्था), स्वामी: Shaan Singh Bilhatiya, Udyam नं.: UDYAM-MP-29-0021193</td>
-    </tr>
-    <tr>
-      <td><strong>ग्राहक</strong></td>
-      <td>
-        नाम: <strong><span id="ag-name"></span></strong> &nbsp;&nbsp; आधार नं.: <span id="ag-aadhaar"></span><br>
-        पता: <span id="ag-address"></span><br>
-        मोबाइल: <span id="ag-mobile"></span>
+      <td class="lbl-col">सेवा प्रदाता</td>
+      <td class="val-col">
+        Ruralift (MSME/Udyam पंजीकृत स्वामित्व संस्था)<br>
+        स्वामी: <strong>Shaan Singh Bilhatiya</strong> &nbsp;|&nbsp; Udyam नं.: UDYAM-MP-29-0021193<br>
+        (इसके बाद "Ruralift" या "परामर्शदाता" कहा जाएगा)
       </td>
     </tr>
     <tr>
-      <td><strong>सहमत ऋण राशि</strong></td>
-      <td>रु. <span id="ag-loanAmt"></span> (रुपये <span id="ag-loanAmtWords"></span> मात्र)</td>
+      <td class="lbl-col">ग्राहक</td>
+      <td class="val-col">
+        <span class="row-line">नाम: <strong><span id="ag-name" class="fl fl-lg"></span></strong> &nbsp;&nbsp;&nbsp; आधार नं.: <span id="ag-aadhaar" class="fl fl-md"></span></span>
+        <span class="row-line">पता: <span id="ag-address" class="fl fl-xl"></span></span>
+        <span class="row-line">मोबाइल: <span id="ag-mobile" class="fl fl-md"></span> &nbsp;&nbsp; (इसके बाद "ग्राहक" कहा जाएगा)</span>
+      </td>
     </tr>
     <tr>
-      <td><strong>अनुबंध दिनांक</strong></td>
-      <td>दिनांक: <span id="ag-date"></span> &nbsp;&nbsp; स्थान: <span id="ag-place"></span></td>
+      <td class="lbl-col">सहमत ऋण राशि</td>
+      <td class="val-col">रु. <span id="ag-loanAmt" class="fl fl-md"></span> &nbsp;&nbsp; (रुपये <span id="ag-loanAmtWords" class="fl fl-lg"></span> मात्र)</td>
+    </tr>
+    <tr>
+      <td class="lbl-col">अनुबंध दिनांक</td>
+      <td class="val-col">दिनांक: <span id="ag-date" class="fl fl-sm"></span> &nbsp;&nbsp;&nbsp; स्थान: <span id="ag-place" class="fl fl-md"></span></td>
     </tr>
   </table>
 
@@ -589,89 +697,177 @@ textarea { resize: vertical; min-height: 70px; }
 
   <div class="section-head">2. परामर्श शुल्क</div>
   <table class="doc-table">
-    <tr><th>स्थिति</th><th>लागू शुल्क</th></tr>
-    <tr><td>प्रारंभिक परामर्श / प्रथम मुलाकात शुल्क</td><td><strong>रु. 500/- — निश्चित, अप्रतिदेय</strong></td></tr>
-    <tr><td>ऋणदाता द्वारा आवेदन अस्वीकृत (ग्राहक की चूक के बिना)</td><td><strong>शून्य — कोई शुल्क नहीं</strong></td></tr>
-    <tr>
-      <td>ऋण सफलतापूर्वक वितरित</td>
-      <td>सहमत परामर्श शुल्क: <strong>रु. <span id="ag-successFee"></span> (रुपये <span id="ag-successFeeWords"></span> मात्र)</strong> — वितरण पर Ruralift को तत्काल देय</td>
-    </tr>
+    <thead>
+      <tr><th width="55%">स्थिति</th><th width="45%">लागू शुल्क</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>प्रारंभिक परामर्श / प्रथम मुलाकात शुल्क (सभी ग्राहकों पर लागू)</td>
+        <td><strong>रु. 500/- (रुपये पाँच सौ मात्र)</strong><br><span style="font-size:9.5pt">निश्चित, प्रथम मुलाकात पर देय, <strong>अप्रतिदेय</strong></span></td>
+      </tr>
+      <tr>
+        <td>ऋणदाता द्वारा आवेदन अस्वीकृत (ग्राहक की चूक के बिना)</td>
+        <td><strong>शून्य — कोई शुल्क नहीं</strong></td>
+      </tr>
+      <tr>
+        <td>ऋण सफलतापूर्वक वितरित</td>
+        <td>
+          सहमत परामर्श शुल्क:<br>
+          <strong>रु. <span id="ag-successFee" class="fl fl-sm"></span></strong><br>
+          (रुपये <span id="ag-successFeeWords" class="fl fl-lg"></span> मात्र)<br>
+          <span style="font-size:9.5pt">— वितरण पर Ruralift को तत्काल देय</span>
+        </td>
+      </tr>
+    </tbody>
   </table>
   <p class="para">2.1 प्रारंभिक परामर्श/मुलाकात शुल्क रु. 500/- प्रथम मुलाकात के समय देय एवं अप्रतिदेय है। 2.2 सफलता-आधारित परामर्श शुल्क केवल ऋण राशि के सफल वितरण के बाद देय होगा। 2.5 ऋण वितरण के 7 दिनों के भीतर भुगतान न होने पर 2% प्रति माह विलंब शुल्क लागू होगा।</p>
 
   <div class="section-head">3. अग्रदिनांकित चेक (PDC) — सुरक्षा साधन</div>
-  <table class="doc-table">
-    <tr><th>विवरण</th><th>जानकारी</th></tr>
-    <tr><td>चेक नंबर</td><td><span id="ag-chequeNo"></span></td></tr>
-    <tr><td>बैंक का नाम एवं शाखा</td><td><span id="ag-chequeBankBranch"></span></td></tr>
-    <tr><td>खाताधारक का नाम</td><td><span id="ag-chequeHolder"></span></td></tr>
-    <tr><td>चेक राशि</td><td>रु. <span id="ag-chequeAmt"></span></td></tr>
-    <tr><td>चेक दिनांक</td><td><span id="ag-chequeDate"></span></td></tr>
+  <p class="para">3.1–3.2 इस अनुबंध के सुरक्षा साधन के रूप में, ग्राहक इस अनुबंध पर हस्ताक्षर के समय Ruralift के पक्ष में एक (1) अग्रदिनांकित चेक (PDC) जारी करने की सहमति देता है:</p>
+  <table class="pdc-table">
+    <tr>
+      <td class="pdc-lbl">चेक नंबर (Cheque No.)</td>
+      <td class="pdc-val"><span id="ag-chequeNo" class="fl fl-md"></span></td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">बैंक का नाम एवं शाखा</td>
+      <td class="pdc-val"><span id="ag-chequeBankBranch" class="fl fl-lg"></span></td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">खाताधारक का नाम</td>
+      <td class="pdc-val"><span id="ag-chequeHolder" class="fl fl-lg"></span></td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">चेक राशि (Amount) रु.</td>
+      <td class="pdc-val"><span id="ag-chequeAmt" class="fl fl-md"></span></td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">चेक दिनांक (Cheque Date)</td>
+      <td class="pdc-val"><span id="ag-chequeDate" class="fl fl-sm"></span></td>
+    </tr>
   </table>
-  <p class="para">3.3 PDC को Ruralift द्वारा केवल (अ) ऋण के सफल वितरण पर, या (ब) ग्राहक द्वारा अनुबंध भंग होने पर जमा किया जाएगा। 3.4 चेक की दिनांक मूल परिपक्वता तिथि से 30 दिन स्वतः बढ़ी हुई मानी जाएगी।</p>
+  <p class="para">3.3 PDC को Ruralift द्वारा केवल (अ) ऋण के सफल वितरण पर, या (ब) ग्राहक द्वारा अनुबंध भंग होने पर जमा किया जाएगा। 3.4 चेक की दिनांक मूल परिपक्वता तिथि से 30 दिन स्वतः बढ़ी हुई मानी जाएगी। 3.5 ग्राहक की चूक के बिना ऋण अस्वीकृत होने पर PDC 30 दिनों में वापस किया जाएगा। 3.6 PDC का अनादरण परक्राम्य लिखत अधिनियम, 1881 की <strong>धारा 138</strong> के अंतर्गत आपराधिक अपराध है।</p>
 
   <div class="section-head">4. ग्राहक द्वारा अनुबंध भंग एवं क्षतिपूर्ति</div>
-  <p class="para">4.2 <strong>नुकसान भरपाई (Liquidated Damages):</strong> अनुबंध भंग की स्थिति में ग्राहक सहमत ऋण राशि का 3% या सहमत परामर्श शुल्क — जो भी अधिक हो — Ruralift को देने का उत्तरदायी होगा। यह भारतीय अनुबंध अधिनियम, 1872 की धारा 74 के अंतर्गत उचित पूर्व-अनुमान (genuine pre-estimate) है।</p>
+  <p class="para">4.1 निम्नलिखित कार्य ग्राहक द्वारा इस अनुबंध का भौतिक भंग (material breach) माने जाएंगे: (अ) Ruralift द्वारा ऋण संस्थान को आवेदन जमा करने के बाद स्वेच्छा से आवेदन वापस लेना या ऋण प्रस्ताव अस्वीकार करना; (ब) Ruralift के माध्यम से प्राप्त जानकारी किसी प्रतिस्पर्धी एजेंट को साझा करना; (स) सहमत परामर्श शुल्क को कम करने या भुगतान से बचने का प्रयास करना; (द) जानबूझकर गलत, जाली या भ्रामक दस्तावेज़ प्रदान करना; (इ) ऋण प्रक्रिया में जानबूझकर असहयोग करना; (फ) बिना लिखित सूचना के किसी अन्य एजेंट को नियुक्त करना; (ग) Ruralift या उसके प्रतिनिधियों के बारे में मानहानिकारक बयान देना।</p>
+  <p class="para">4.2 <strong>नुकसान भरपाई (Liquidated Damages):</strong> अनुबंध भंग की स्थिति में ग्राहक सहमत ऋण राशि का <strong>3% (तीन प्रतिशत)</strong> या सहमत परामर्श शुल्क — जो भी अधिक हो — Ruralift को देने का उत्तरदायी होगा। यह भारतीय अनुबंध अधिनियम, 1872 की धारा 74 के अंतर्गत उचित पूर्व-अनुमान (genuine pre-estimate) है।</p>
+  <p class="para">4.3 अनुबंध भंग की स्थिति में Ruralift PDC जमा करने का अधिकार सुरक्षित रखता है। चेक का अनादरण धारा 138 NI Act के अंतर्गत आपराधिक कार्यवाही को आकर्षित करेगा।</p>
+  <p class="para">4.4 Ruralift किसी भी चरण में किसी भी ऋण आवेदन को वापस लेने का पूर्ण एकतरफा अधिकार सुरक्षित रखता है। Ruralift द्वारा वापसी की स्थिति में (जो ग्राहक के उल्लंघन के कारण नहीं हो) PDC ग्राहक को 30 दिनों के भीतर वापस किया जाएगा।</p>
 
   <div class="section-head">5. गैर-प्रतिस्पर्धा एवं गैर-परिवर्जन (Non-Circumvention)</div>
-  <p class="para">5.1 ऋण आवेदन सक्रिय रहने तक, ग्राहक Ruralift द्वारा परिचित कराए गए किसी भी ऋण संस्थान, बैंक अधिकारी, DSA, या संपर्क से सीधे ऋण सेवा प्राप्त करने का प्रयास नहीं करेगा।</p>
-  <p class="para">5.2 ऋण वितरण या अस्वीकृति के बाद 3 महीनों तक उन्हीं संपर्कों से सीधे संपर्क नहीं करेगा।</p>
+  <p class="para">5.1 <strong>सक्रिय अवधि के दौरान:</strong> जब तक इस अनुबंध के अंतर्गत ऋण आवेदन सक्रिय रूप से प्रसंस्करण में है — अर्थात् अनुबंध की तिथि से लेकर ऋण के सफल वितरण अथवा ऋण संस्थान द्वारा अंतिम अस्वीकृति/रद्दीकरण (जो भी पहले हो) तक — ग्राहक Ruralift द्वारा परिचित कराए गए किसी भी ऋण संस्थान, बैंक अधिकारी, DSA, या किसी भी संपर्क से सीधे (Ruralift को दरकिनार करते हुए) ऋण सेवा प्राप्त करने का प्रयास किसी भी परिस्थिति में नहीं करेगा।</p>
+  <p class="para">5.2 <strong>सक्रिय अवधि समाप्त होने के बाद:</strong> ऋण के सफल वितरण अथवा अंतिम अस्वीकृति के बाद 3 (तीन) महीनों तक, ग्राहक Ruralift द्वारा परिचित कराए गए उन्हीं संपर्कों से सीधे उसी प्रकार की ऋण सेवा प्राप्त करने का प्रयास नहीं करेगा। 3 महीने की अवधि पूर्ण होने के बाद ग्राहक स्वतंत्र है।</p>
+  <p class="para">5.3 यह प्रतिबंध केवल Ruralift द्वारा परिचित कराए गए विशिष्ट संपर्कों पर लागू है। ग्राहक स्वतंत्र रूप से (Ruralift के संपर्कों के बिना) किसी भी ऋण संस्थान से संपर्क करने के लिए सदैव स्वतंत्र है।</p>
 
-  <div class="section-head">6-15. अन्य प्रावधान (संक्षेप)</div>
-  <p class="para"><strong>धारा 6 — दायित्व की सीमा:</strong> Ruralift का अधिकतम दायित्व ग्राहक द्वारा वास्तव में भुगतान की गई परामर्श शुल्क राशि से अधिक नहीं होगा। | <strong>धारा 8 — गोपनीयता एवं डेटा सहमति:</strong> ग्राहक Ruralift को सेवाओं हेतु ऋण संस्थानों के साथ व्यक्तिगत जानकारी साझा करने की सहमति प्रदान करता है। | <strong>धारा 14 — विवाद समाधान:</strong> विवाद मध्यस्थता एवं सुलह अधिनियम, 1996 के अंतर्गत एकल मध्यस्थ द्वारा निपटाया जाएगा। अधिकार क्षेत्र: Ruralift के पंजीकृत कार्यालय का जिला। | <strong>धारा 15 — समग्र अनुबंध:</strong> यह अनुबंध दोनों पक्षों के बीच सभी पूर्व समझौतों को प्रतिस्थापित करता है।</p>
+  <div class="section-head">6. दायित्व की सीमा (Limitation of Liability)</div>
+  <p class="para">6.1 किसी भी परिस्थिति में Ruralift का कुल संचयी दायित्व (total cumulative liability) ग्राहक द्वारा वास्तव में भुगतान की गई परामर्श शुल्क राशि से अधिक नहीं होगा। यदि कोई शुल्क नहीं दिया गया है तो Ruralift का दायित्व शून्य (NIL) होगा।</p>
+  <p class="para">6.2 Ruralift किसी भी परिस्थिति में अप्रत्यक्ष/आकस्मिक/परिणामी हानि, लाभ की हानि, व्यापार की हानि, प्रतिष्ठा की हानि, ऋण अस्वीकृति से उत्पन्न कोई भी हानि, या ऋण संस्थान की किसी भी कार्यवाही से उत्पन्न हानि के लिए उत्तरदायी नहीं होगा।</p>
+
+  <div class="section-head">7. क्षतिपूर्ति (Indemnification by Client)</div>
+  <p class="para">7.1 ग्राहक Ruralift, उसके स्वामी, कर्मचारियों एवं प्रतिनिधियों को किसी भी और सभी दावों, वादों, हानियों एवं व्ययों (वकील शुल्क सहित) से क्षतिपूर्ति करेगा और हानिरहित (hold harmless) रखेगा जो निम्नलिखित के कारण उत्पन्न हों: (अ) ग्राहक द्वारा प्रदान की गई किसी भी गलत/अपूर्ण/भ्रामक जानकारी या दस्तावेज़; (ब) ग्राहक द्वारा इस अनुबंध की किसी भी शर्त का उल्लंघन; (स) ग्राहक द्वारा किसी भी लागू कानून का उल्लंघन; (द) किसी तीसरे पक्ष द्वारा ग्राहक के कार्यों के कारण Ruralift के विरुद्ध उठाया गया कोई भी दावा।</p>
+
+  <div class="section-head">8. गोपनीयता एवं डेटा सहमति</div>
+  <p class="para">8.1 ग्राहक Ruralift को इस अनुबंध की सेवाओं के निष्पादन हेतु ग्राहक की व्यक्तिगत जानकारी, दस्तावेज़, वित्तीय विवरण, क्रेडिट जानकारी और संबंधित डेटा को एक या एक से अधिक ऋण संस्थानों, बैंकों, NBFCs, DSAs और संबंधित तृतीय पक्षों के साथ साझा करने की स्पष्ट एवं सूचित सहमति प्रदान करता है।</p>
+  <p class="para">8.2 Ruralift ग्राहक की जानकारी का उपयोग केवल इस अनुबंध के उद्देश्यों के लिए करेगा। 8.3 ग्राहक Ruralift की व्यापार प्रक्रियाओं, शुल्क संरचना, ऋणदाता संपर्कों, और इस अनुबंध की शर्तों को गोपनीय रखेगा।</p>
+
+  <div class="section-head">9. Ruralift के दायित्व</div>
+  <p class="para">(अ) Ruralift ग्राहक के हित में उचित परिश्रम एवं सर्वोत्तम प्रयास के साथ सेवाएं प्रदान करेगा। (ब) Ruralift ग्राहक द्वारा साझा किए गए दस्तावेजों और व्यक्तिगत जानकारी की उचित गोपनीयता बनाए रखेगा। (स) प्रारंभिक परामर्श/मुलाकात शुल्क (रु. 500/- निश्चित शुल्क) को छोड़कर, Ruralift किसी भी परिस्थिति में ऋण वितरण से पूर्व कोई अन्य शुल्क नहीं लेगा। (द) ग्राहक की चूक के बिना ऋण अस्वीकृत होने पर Ruralift धारा 3.5 के अनुसार PDC वापस करेगा।</p>
+
+  <div class="section-head">10. ग्राहक के दायित्व</div>
+  <p class="para">(अ) ग्राहक सटीक, पूर्ण, वास्तविक और अद्यतन दस्तावेज़ीकरण प्रदान करेगा। (ब) ग्राहक ऋण प्रक्रिया के सभी चरणों में पूरी तरह, तत्परता से और समय पर सहयोग करेगा। (स) ग्राहक इस अनुबंध की अवधि के दौरान उसी ऋण आवश्यकता के लिए किसी अन्य एजेंट को Ruralift को लिखित सूचना दिए बिना नियुक्त नहीं करेगा। (द) ग्राहक हस्ताक्षर के समय धारा 3 में वर्णित PDC जारी करेगा। (इ) ग्राहक वितरण पर परामर्श शुल्क को तत्काल (7 दिनों के भीतर) देगा। (फ) ग्राहक Ruralift, उसके स्वामी या प्रतिनिधियों के विरुद्ध कोई मानहानिकारक बयान किसी भी माध्यम पर नहीं देगा।</p>
+
+  <div class="section-head">11. अस्वीकरण — Ruralift ऋणदाता नहीं है</div>
+  <p class="para">11.1 Ruralift एक MSME/Udyam पंजीकृत स्वतंत्र वित्तीय परामर्श एवं दस्तावेज़ सुविधा संस्था है और कोई बैंक, NBFC, ऋण संस्थान या पंजीकृत वित्तीय संस्था नहीं है। Ruralift पैसा उधार नहीं देता, ऋण स्वीकृति की गारंटी नहीं देता और ऋण संस्थान के किसी भी निर्णय को प्रभावित करने का दावा नहीं करता।</p>
+  <p class="para">11.2 ऋण स्वीकृति या अस्वीकृति का अंतिम निर्णय केवल ऋण संस्थान का होता है। किसी भी अस्वीकृति, विलंब, या प्रतिकूल निर्णय के लिए Ruralift को उत्तरदायी नहीं ठहराया जा सकता।</p>
+  <p class="para">11.3 <strong>शुल्क पृथक्करण:</strong> Ruralift को इस अनुबंध के अंतर्गत देय परामर्श शुल्क ऋण संस्थान द्वारा ग्राहक पर लगाए गए किसी भी शुल्क (प्रसंस्करण शुल्क, EMI, बीमा आदि) तथा ऋण संस्थान द्वारा Ruralift/DSA को दिए जाने वाले किसी भी कमीशन से पूर्णतः अलग, स्वतंत्र एवं असंबद्ध है। ग्राहक का परामर्श शुल्क Ruralift के DSA कमीशन से समायोजित (set-off) नहीं किया जाएगा।</p>
+  <p class="para">11.4 <strong>ग्राहक की सूचित सहमति:</strong> ग्राहक स्वीकार करता है कि Ruralift/इसके स्वामी का ऋण संस्थानों के साथ DSA/चैनल पार्टनर संबंध हो सकता है और Ruralift को ऋण संस्थान से कमीशन प्राप्त हो सकता है। ग्राहक ने यह सब जानते हुए, बिना किसी दबाव, स्वेच्छा से इस शुल्क पर सहमति दी है।</p>
+  <p class="para">11.5 <strong>कोई मौखिक वचन नहीं:</strong> Ruralift या उसके किसी प्रतिनिधि ने ऋण स्वीकृति, ऋण राशि, ब्याज दर, समय-सीमा, या किसी अन्य विषय पर कोई मौखिक गारंटी नहीं दी है। यदि कोई मौखिक बयान इस लिखित अनुबंध से असंगत है तो यह लिखित अनुबंध प्रभावी होगा।</p>
+
+  <div class="section-head">12. अप्रत्याशित घटना (Force Majeure)</div>
+  <p class="para">12.1 Ruralift ऐसी किसी भी देरी, विफलता, या सेवा में बाधा के लिए उत्तरदायी नहीं होगा जो उसके उचित नियंत्रण से परे किसी कारण से उत्पन्न हो — जिसमें शामिल हैं: प्राकृतिक आपदा, महामारी, सरकारी आदेश, ऋण संस्थान द्वारा नीति परिवर्तन या सिस्टम विफलता, बैंकिंग हड़ताल, इंटरनेट या संचार विफलता, RBI/सरकार द्वारा नियामक परिवर्तन। Force Majeure की स्थिति में PDC बिना जमा किए वापस किया जाएगा।</p>
+
+  <div class="section-head">13. संचार का माध्यम</div>
+  <p class="para">13.1 इस अनुबंध से संबंधित सभी सूचनाएं केवल लिखित माध्यम से मान्य होंगी — जिसमें WhatsApp संदेश, SMS, ईमेल, या भौतिक पत्र शामिल हैं। ग्राहक का पंजीकृत WhatsApp नंबर एवं ईमेल आधिकारिक संचार माध्यम माना जाएगा। इन माध्यमों पर भेजी गई कोई भी सूचना ग्राहक को विधिवत् प्राप्त मानी जाएगी।</p>
+  <p class="para">13.3 <strong>मौखिक संचार अमान्य:</strong> कोई भी मौखिक वार्ता, टेलीफोन पर की गई बातचीत, या अनौपचारिक संवाद इस अनुबंध को संशोधित, परिवर्तित या प्रतिस्थापित नहीं कर सकता।</p>
+
+  <div class="section-head">14. प्रशासनिक कानून एवं विवाद समाधान</div>
+  <p class="para">14.1 यह अनुबंध भारत के कानूनों द्वारा शासित होगा, जिसमें भारतीय अनुबंध अधिनियम, 1872 और परक्राम्य लिखत अधिनियम, 1881 प्रमुख रूप से शामिल हैं।</p>
+  <p class="para">14.2–14.3 किसी भी विवाद को पहले लिखित सूचना के 30 दिनों के भीतर आपसी चर्चा द्वारा सुलझाने का प्रयास किया जाएगा। यदि समाधान नहीं होता, तो विवाद को मध्यस्थता एवं सुलह अधिनियम, 1996 के अंतर्गत एकल मध्यस्थ (sole arbitrator) द्वारा निपटाया जाएगा। मध्यस्थ की नियुक्ति Ruralift द्वारा की जाएगी। मध्यस्थता की भाषा हिन्दी/अंग्रेजी होगी और स्थान Ruralift के कार्यालय का जिला होगा।</p>
+  <p class="para">14.4 <strong>अधिकार क्षेत्र (Jurisdiction):</strong> विवाद केवल उस जिले की न्यायालयों के अनन्य अधिकार क्षेत्र (exclusive jurisdiction) के अधीन होगा जहाँ Ruralift का पंजीकृत कार्यालय/कार्यस्थल है।</p>
+  <p class="para">14.5 <strong>वाद लागत:</strong> विवाद की स्थिति में हारने वाला पक्ष जीतने वाले पक्ष की सभी कानूनी लागतें (वकील शुल्क, न्यायालय शुल्क, यात्रा व्यय सहित) वहन करेगा।</p>
+
+  <div class="section-head">15. विविध प्रावधान (Miscellaneous)</div>
+  <p class="para">15.1 <strong>पृथक्करणीयता:</strong> यदि इस अनुबंध की कोई धारा किसी सक्षम न्यायालय द्वारा अमान्य घोषित की जाती है, तो शेष धारा पूर्ण रूप से प्रभावी रहेंगी।</p>
+  <p class="para">15.2 <strong>संपूर्ण अनुबंध:</strong> यह अनुबंध दोनों पक्षों के बीच इस विषय पर किसी भी पूर्व मौखिक या लिखित समझौते को प्रतिस्थापित करता है। संशोधन केवल दोनों पक्षों द्वारा हस्ताक्षरित लिखित दस्तावेज़ द्वारा ही किया जा सकता है।</p>
+  <p class="para">15.3 <strong>अधिकार त्याग:</strong> Ruralift द्वारा किसी अधिकार का किसी अवसर पर प्रयोग न करना उस अधिकार का त्याग नहीं माना जाएगा।</p>
+  <p class="para">15.4 <strong>हस्तांतरण:</strong> ग्राहक इस अनुबंध के अंतर्गत अपने अधिकारों या दायित्वों को Ruralift की लिखित सहमति के बिना किसी तीसरे पक्ष को हस्तांतरित नहीं कर सकता। Ruralift इस अनुबंध को बिना ग्राहक की सहमति के किसी भी सहयोगी या उत्तराधिकारी को हस्तांतरित कर सकता है।</p>
+  <p class="para">15.5 <strong>उत्तरजीविता:</strong> धारा 4, 5, 6, 7, 8 और 14 इस अनुबंध की समाप्ति के बाद भी प्रभावी रहेंगी।</p>
+  <p class="para">15.6 <strong>भाषा:</strong> इस अनुबंध की मूल भाषा हिन्दी है। किसी भी अनुवाद और हिन्दी संस्करण में विरोधाभास होने पर हिन्दी संस्करण प्रभावी होगा।</p>
 
   <div class="section-head">16. ग्राहक द्वारा घोषणा — स्वतंत्र इच्छा एवं सूचित सहमति</div>
-  <p class="para">मैं, <strong><span id="ag-decl-name"></span></strong>, एतद्द्वारा घोषणा करता/करती हूँ कि: (अ) मैंने इस अनुबंध को ध्यानपूर्वक पढ़ा और समझा है। (ब) मैं यह अनुबंध अपनी स्वतंत्र इच्छा से हस्ताक्षर कर रहा/रही हूँ — बिना किसी दबाव के। (स) मैं शुल्क संरचना को समझता/समझती हूँ। (द) मैं धारा 4 के परिणामों, PDC अनादरण के आपराधिक परिणामों (धारा 138 NI Act) से अवगत हूँ। (इ) Ruralift ने ऋण स्वीकृति की कोई गारंटी नहीं दी है। (फ) मैं Ruralift को व्यक्तिगत जानकारी ऋण संस्थानों के साथ साझा करने की सहमति देता/देती हूँ।</p>
+  <p class="para">मैं, <strong><span id="ag-decl-name"></span></strong>, एतद्द्वारा घोषणा करता/करती हूँ कि:</p>
+  <p class="para" style="margin-left:14px">
+    (अ) मैंने इस अनुबंध को हस्ताक्षर करने से पहले पर्याप्त समय लेकर ध्यानपूर्वक पढ़ा है और इसकी सभी शर्तों एवं नियमों को पूरी तरह समझा है। मुझे इस अनुबंध पर हस्ताक्षर करने से पहले स्वतंत्र कानूनी परामर्श लेने का अवसर दिया गया था।<br>
+    (ब) मैं यह अनुबंध अपनी स्वतंत्र इच्छा से हस्ताक्षर कर रहा/रही हूँ — Ruralift या उसके किसी प्रतिनिधि द्वारा किसी भी प्रकार के दबाव, जोर-जबरदस्ती, अनुचित प्रभाव, गलत बयानी, या ऋण स्वीकृति की गारंटी के बिना।<br>
+    (स) मैं शुल्क संरचना को समझता/समझती हूँ और स्वीकार करता/करती हूँ कि धारा 2.1 में वर्णित रु. 500/- का प्रारंभिक परामर्श/मुलाकात शुल्क प्रथम मुलाकात के समय देय एवं अप्रतिदेय है, तथा धारा 2 में दर्ज सहमत सफलता-आधारित परामर्श शुल्क ऋण वितरण पर तत्काल और बिना शर्त देय होगा।<br>
+    (द) मैं धारा 4 में उल्लिखित अनुबंध भंग के परिणामों को पूर्ण रूप से समझता/समझती हूँ, जिसमें 3% नुकसान भरपाई और PDC जमा करने का अधिकार शामिल है, और ऐसी स्थिति में अपने दायित्व को स्वीकार करता/करती हूँ।<br>
+    (इ) मैंने स्वेच्छा से धारा 3 में वर्णित अग्रदिनांकित चेक जारी किया है और उन परिस्थितियों को समझता/समझती हूँ जिनमें इसे जमा किया जा सकता है, जिसमें चेक अनादरण के आपराधिक परिणाम (धारा 138 NI Act) शामिल हैं।<br>
+    (फ) मैं समझता/समझती हूँ कि Ruralift एक स्वतंत्र परामर्श संस्था है न कि ऋण संस्थान, और ऋण स्वीकृति या अस्वीकृति का निर्णय केवल ऋणदाता का है जिस पर Ruralift का कोई नियंत्रण नहीं है।<br>
+    (ग) मैं पुष्टि करता/करती हूँ कि मेरे द्वारा Ruralift को प्रस्तुत सभी जानकारी और दस्तावेज़ मेरी सर्वोत्तम जानकारी के अनुसार सच्चे, सटीक और पूर्ण हैं।<br>
+    (ह) मुझे ऋण स्वीकृति की कोई गारंटी नहीं दी गई है और मैं स्वीकार करता/करती हूँ कि सफलता-आधारित परामर्श शुल्क केवल सफल वितरण पर ही देय है, जबकि धारा 2.1 का प्रारंभिक परामर्श शुल्क इससे पृथक एवं प्रथम मुलाकात पर देय है।<br>
+    (झ) मैं स्वीकार करता/करती हूँ कि Ruralift को मेरी व्यक्तिगत जानकारी और दस्तावेज़ ऋण संस्थानों के साथ साझा करने की मेरी सहमति है (धारा 8)।<br>
+    (ञ) मैं समझता/समझती हूँ कि Ruralift/इसके स्वामी का ऋण संस्थानों के साथ DSA/चैनल पार्टनर संबंध हो सकता है और Ruralift को ऋण संस्थान से कमीशन प्राप्त हो सकता है। मैं यह जानते हुए भी स्वेच्छा से इस अनुबंध के अंतर्गत अतिरिक्त परामर्श शुल्क देने पर सहमत हूँ।<br>
+    (ट) मुझे स्वतंत्र कानूनी सलाह लेने का पर्याप्त अवसर दिया गया। मैंने चाहे ऐसी सलाह ली हो या नहीं, मैं इस अनुबंध की सभी शर्तों से बाध्य होने के लिए सहमत हूँ।
+  </p>
 
   <div class="section-head">17. हस्ताक्षर</div>
+  <p class="para" style="font-size:9.5pt;font-style:italic">यह अनुबंध उपरोक्त दिनांक को दोनों पक्षों द्वारा इसमें उल्लिखित सभी शर्तों की पूर्ण समझ, स्वतंत्र इच्छा एवं सूचित सहमति से निष्पादित किया गया है।</p>
   <table class="sig-table">
     <tr>
       <td width="50%">
         <strong>Ruralift की ओर से (सेवा प्रदाता)</strong>
-        <div class="sig-box"></div>
-        <div>नाम: <strong>Shaan Singh Bilhatiya</strong></div>
-        <div>Udyam नं.: UDYAM-MP-29-0021193</div>
-        <div>(हस्ताक्षर / Signature)</div>
-        <br>
-        <div>दिनांक: _____ / _____ / __________</div>
-        <br>
-        <div><strong>अंगूठे का निशान / Thumb Impression:</strong></div>
-        <div style="border:1px solid #ccc;width:80px;height:50px;margin-top:4px"></div>
+        <div class="sig-box">
+          <div>नाम: <strong>Shaan Singh Bilhatiya</strong></div>
+          <div>Udyam नं.: UDYAM-MP-29-0021193</div>
+          <div>(हस्ताक्षर / Signature)</div>
+        </div>
+        <div class="date-line">दिनांक: _____ / _____ / __________</div>
+        <div style="margin-top:8px"><strong>अंगूठे का निशान / Thumb Impression:</strong><br><div class="thumb-box">अंगूठा</div></div>
       </td>
       <td width="50%">
         <strong>ग्राहक</strong>
-        <div class="sig-box"></div>
-        <div>नाम: <span id="ag-sig-name"></span></div>
-        <div>आधार नं.: <span id="ag-sig-aadhaar"></span></div>
-        <div>(हस्ताक्षर / Signature)</div>
-        <br>
-        <div>दिनांक: _____ / _____ / __________</div>
-        <br>
-        <div><strong>अंगूठे का निशान / Thumb Impression:</strong></div>
-        <div style="border:1px solid #ccc;width:80px;height:50px;margin-top:4px"></div>
+        <div class="sig-box">
+          <div>नाम: <span id="ag-sig-name" class="fl fl-lg"></span></div>
+          <div>आधार नं.: <span id="ag-sig-aadhaar" class="fl fl-md"></span></div>
+          <div>(हस्ताक्षर / Signature)</div>
+        </div>
+        <div class="date-line">दिनांक: _____ / _____ / __________</div>
+        <div style="margin-top:8px"><strong>अंगूठे का निशान / Thumb Impression:</strong><br><div class="thumb-box">अंगूठा</div></div>
       </td>
     </tr>
   </table>
 
-  <div style="margin-top:16px">
+  <div style="margin-top:18px">
     <strong>गवाह (Witnesses)</strong>
-    <table class="sig-table">
+    <table class="sig-table" style="margin-top:8px">
       <tr>
         <td width="50%">
           <strong>गवाह 1 (Witness 1)</strong>
-          <div class="sig-box"></div>
-          <div>नाम: _______________________________</div>
-          <div>(हस्ताक्षर / Signature)</div>
-          <div>आधार नं.: ___________________________</div>
-          <div>संपर्क: ______________________________</div>
+          <div class="sig-box">
+            <div>नाम: <span class="fl fl-lg"></span></div>
+            <div>(हस्ताक्षर / Signature)</div>
+          </div>
+          <div class="date-line">आधार नं.: <span class="fl fl-md"></span></div>
+          <div class="date-line">संपर्क: <span class="fl fl-md"></span></div>
         </td>
         <td width="50%">
           <strong>गवाह 2 (Witness 2)</strong>
-          <div class="sig-box"></div>
-          <div>नाम: _______________________________</div>
-          <div>(हस्ताक्षर / Signature)</div>
-          <div>आधार नं.: ___________________________</div>
-          <div>संपर्क: ______________________________</div>
+          <div class="sig-box">
+            <div>नाम: <span class="fl fl-lg"></span></div>
+            <div>(हस्ताक्षर / Signature)</div>
+          </div>
+          <div class="date-line">आधार नं.: <span class="fl fl-md"></span></div>
+          <div class="date-line">संपर्क: <span class="fl fl-md"></span></div>
         </td>
       </tr>
     </table>
@@ -682,52 +878,89 @@ textarea { resize: vertical; min-height: 70px; }
 
   <div class="doc-header" style="margin-top:0">
     <img src="logo.jpg" class="doc-logo" alt="Ruralift">
+    <div class="doc-owner">स्वामी: Shaan Singh Bilhatiya | Udyam: UDYAM-MP-29-0021193</div>
     <div class="doc-title-hi">अग्रदिनांकित चेक (PDC) स्वीकृति रसीद</div>
     <div class="doc-title-en">RURALIFT — Post-Dated Cheque Acknowledgement Receipt</div>
   </div>
 
-  <p class="para">यह स्वीकार किया जाता है कि Ruralift ने दिनांक <span id="pdc-date"></span> को निष्पादित ऋण सुविधा परामर्श अनुबंध के अनुसरण में ग्राहक से निम्नलिखित अग्रदिनांकित चेक सुरक्षा साधन के रूप में प्राप्त किया है।</p>
+  <p class="para">यह स्वीकार किया जाता है कि Ruralift ने दिनांक <strong><span id="pdc-date" class="fl fl-sm"></span></strong> को निष्पादित ऋण सुविधा परामर्श अनुबंध के अनुसरण में ग्राहक से निम्नलिखित अग्रदिनांकित चेक सुरक्षा साधन के रूप में प्राप्त किया है।</p>
 
-  <table class="doc-table" style="margin-top:12px">
-    <tr><th colspan="2">PDC विवरण (Cheque Details)</th></tr>
-    <tr><td>प्राप्तकर्ता (ग्राहक का नाम)</td><td><strong><span id="pdc-name"></span></strong></td></tr>
-    <tr><td>ग्राहक मोबाइल</td><td><span id="pdc-mobile"></span></td></tr>
-    <tr><td>ग्राहक आधार नं.</td><td><span id="pdc-aadhaar"></span></td></tr>
-    <tr><td>चेक नं. (Cheque No.)</td><td><span id="pdc-chequeNo"></span></td></tr>
-    <tr><td>बैंक का नाम एवं शाखा</td><td><span id="pdc-chequeBankBranch"></span></td></tr>
-    <tr><td>चेक राशि (Amount) रु.</td><td><span id="pdc-chequeAmt"></span></td></tr>
-    <tr><td>चेक दिनांक (Cheque Date)</td><td><span id="pdc-chequeDate"></span></td></tr>
-    <tr><td>उद्देश्य (Purpose)</td><td>ऋण सुविधा परामर्श अनुबंध हेतु सुरक्षा</td></tr>
-    <tr><td>Ruralift की ओर से प्राप्त</td><td>Shaan Singh Bilhatiya</td></tr>
-    <tr><td>रसीद दिनांक (Receipt Date)</td><td><span id="pdc-receipt-date"></span></td></tr>
+  <table class="pdc-table" style="margin-top:10px">
+    <tr><td class="pdc-lbl" colspan="2" style="text-align:center;font-size:11pt;background:#e8e8e8"><strong>PDC विवरण (Cheque Details)</strong></td></tr>
+    <tr>
+      <td class="pdc-lbl">प्राप्तकर्ता (ग्राहक का नाम)</td>
+      <td class="pdc-val"><strong><span id="pdc-name" class="fl fl-lg"></span></strong></td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">ग्राहक मोबाइल</td>
+      <td class="pdc-val"><span id="pdc-mobile" class="fl fl-md"></span></td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">ग्राहक आधार नं.</td>
+      <td class="pdc-val"><span id="pdc-aadhaar" class="fl fl-md"></span></td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">चेक नं. (Cheque No.)</td>
+      <td class="pdc-val"><span id="pdc-chequeNo" class="fl fl-md"></span></td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">बैंक का नाम एवं शाखा</td>
+      <td class="pdc-val"><span id="pdc-chequeBankBranch" class="fl fl-lg"></span></td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">चेक राशि (Amount) रु.</td>
+      <td class="pdc-val"><strong><span id="pdc-chequeAmt" class="fl fl-md"></span></strong></td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">चेक दिनांक (Cheque Date)</td>
+      <td class="pdc-val"><span id="pdc-chequeDate" class="fl fl-sm"></span></td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">उद्देश्य (Purpose)</td>
+      <td class="pdc-val">ऋण सुविधा परामर्श अनुबंध हेतु सुरक्षा</td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">Ruralift की ओर से प्राप्त</td>
+      <td class="pdc-val"><strong>Shaan Singh Bilhatiya</strong></td>
+    </tr>
+    <tr>
+      <td class="pdc-lbl">रसीद दिनांक (Receipt Date)</td>
+      <td class="pdc-val"><span id="pdc-receipt-date" class="fl fl-sm"></span></td>
+    </tr>
   </table>
 
   <div class="section-head" style="margin-top:14px">जमा करने की शर्तें:</div>
-  <ol style="margin-left:20px;line-height:1.8;font-size:11pt">
-    <li>यह PDC ऋण के सफल वितरण पर सहमत परामर्श शुल्क के रूप में जमा किया जाएगा।</li>
-    <li>यह PDC ग्राहक द्वारा अनुबंध भंग की स्थिति में नुकसान भरपाई (Liquidated Damages) के रूप में जमा किया जाएगा।</li>
-    <li>ग्राहक की किसी चूक के बिना ऋण अस्वीकृति की स्थिति में यह PDC 30 दिनों के भीतर वापस किया जाएगा।</li>
-    <li>चेक की दिनांक परिपक्वता तिथि से 30 दिन स्वतः बढ़ी हुई मानी जाएगी — बिना किसी पूर्व सूचना के।</li>
-    <li>चेक अनादरण की स्थिति में ग्राहक परक्राम्य लिखत अधिनियम, 1881 की धारा 138 के अंतर्गत आपराधिक रूप से दायी होगा।</li>
-  </ol>
+  <div class="purpose-box">
+    <ol>
+      <li>यह PDC ऋण के सफल वितरण पर सहमत परामर्श शुल्क के रूप में जमा किया जाएगा।</li>
+      <li>यह PDC ग्राहक द्वारा अनुबंध भंग की स्थिति में नुकसान भरपाई (Liquidated Damages) के रूप में जमा किया जाएगा।</li>
+      <li>ग्राहक की किसी चूक के बिना ऋण अस्वीकृति की स्थिति में यह PDC बिना जमा किए 30 दिनों के भीतर वापस किया जाएगा अथवा चेक नष्ट करने का वीडियो प्रमाण WhatsApp/ईमेल पर भेजा जाएगा।</li>
+      <li>चेक की दिनांक इसकी परिपक्वता तिथि से 30 दिन स्वतः बढ़ी हुई मानी जाएगी — बिना किसी पूर्व सूचना के। यह विस्तार आवश्यकतानुसार बार-बार लागू होगा।</li>
+      <li>चेक अनादरण की स्थिति में ग्राहक परक्राम्य लिखत अधिनियम, 1881 की <strong>धारा 138</strong> के अंतर्गत आपराधिक रूप से दायी होगा जिसमें दो वर्ष तक का कारावास और/या चेक राशि के दोगुने तक का जुर्माना हो सकता है।</li>
+    </ol>
+  </div>
 
-  <table class="sig-table" style="margin-top:24px">
+  <p class="para" style="margin-top:10px">ग्राहक इस रसीद की एक प्रति प्राप्त करने की पुष्टि करता/करती है और उपरोक्त शर्तों से पूर्णतः सहमत है।</p>
+
+  <table class="sig-table" style="margin-top:22px">
     <tr>
       <td width="50%">
         <strong>Ruralift की ओर से</strong>
-        <div class="sig-box"></div>
-        <div>नाम: Shaan Singh Bilhatiya</div>
-        <div>(हस्ताक्षर / Signature)</div>
-        <br>
-        <div>दिनांक: _____ / _____ / __________</div>
+        <div class="sig-box">
+          <div>नाम: <strong>Shaan Singh Bilhatiya</strong></div>
+          <div>(हस्ताक्षर / Signature)</div>
+        </div>
+        <div class="date-line">दिनांक: _____ / _____ / __________</div>
+        <div class="thumb-box">अंगूठा</div>
       </td>
       <td width="50%">
         <strong>ग्राहक की स्वीकृति</strong>
-        <div class="sig-box"></div>
-        <div>नाम: <span id="pdc-sig-name"></span></div>
-        <div>(हस्ताक्षर / Signature)</div>
-        <br>
-        <div>दिनांक: _____ / _____ / __________</div>
+        <div class="sig-box">
+          <div>नाम: <span id="pdc-sig-name" class="fl fl-lg"></span></div>
+          <div>(हस्ताक्षर / Signature)</div>
+        </div>
+        <div class="date-line">दिनांक: _____ / _____ / __________</div>
+        <div class="thumb-box">अंगूठा</div>
       </td>
     </tr>
   </table>
