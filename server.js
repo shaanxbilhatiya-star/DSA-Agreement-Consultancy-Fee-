@@ -146,6 +146,11 @@ app.delete('/api/customers/:id', (req, res) => {
   if (fs.existsSync(pdfPath)) {
     fs.unlinkSync(pdfPath);
   }
+  // Also delete any uploaded receipt PDF
+  const receiptPdfPath = path.join(UPLOADS_DIR, 'receipt-' + req.params.id + '.pdf');
+  if (fs.existsSync(receiptPdfPath)) {
+    fs.unlinkSync(receiptPdfPath);
+  }
   res.json({ ok: true });
 });
 
@@ -185,6 +190,47 @@ app.delete('/api/customers/:id/agreement', (req, res) => {
       fs.unlinkSync(pdfPath);
     }
     delete state.customers[idx].agreementPdf;
+    saveState(state);
+  }
+  res.json({ ok: true });
+});
+
+// Upload receipt PDF for a customer
+app.post('/api/customers/:id/upload-receipt', async (req, res) => {
+  try {
+    const { filename, data } = await parseMultipart(req);
+    if (!filename.toLowerCase().endsWith('.pdf')) {
+      return res.status(400).json({ error: 'Only PDF files are allowed' });
+    }
+    if (data.length > 10 * 1024 * 1024) {
+      return res.status(400).json({ error: 'File too large (max 10MB)' });
+    }
+    const state = loadState();
+    const idx = state.customers.findIndex(c => c.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'Customer not found' });
+
+    const savedFilename = 'receipt-' + req.params.id + '.pdf';
+    fs.writeFileSync(path.join(UPLOADS_DIR, savedFilename), data);
+    state.customers[idx].receiptPdf = savedFilename;
+    saveState(state);
+    res.json({ ok: true, filename: savedFilename });
+  } catch (e) {
+    res.status(400).json({ error: e.message || 'Upload failed' });
+  }
+});
+
+// Delete uploaded receipt PDF
+app.delete('/api/customers/:id/receipt', (req, res) => {
+  const state = loadState();
+  const idx = state.customers.findIndex(c => c.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Customer not found' });
+  const filename = state.customers[idx].receiptPdf;
+  if (filename) {
+    const pdfPath = path.join(UPLOADS_DIR, filename);
+    if (fs.existsSync(pdfPath)) {
+      fs.unlinkSync(pdfPath);
+    }
+    delete state.customers[idx].receiptPdf;
     saveState(state);
   }
   res.json({ ok: true });
