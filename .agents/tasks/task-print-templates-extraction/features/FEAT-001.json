@@ -29,5 +29,5 @@
     "Verify index.html printReceipt/printAgreement functions use window.open with query params"
   ],
   "blocked_reason": null,
-  "findings": "npm install could not be run due to sandbox environment issue (proxy-bootstrap.js missing). Verified via node --check server.js (syntax OK), and node-based validation of all HTML files (valid structure, correct wording, working JS). Print CSS styles removed from index.html since templates are now self-contained."
+  "findings": "npm install could not be run due to sandbox environment issue (proxy-bootstrap.js missing). Verified via node --check server.js (syntax OK), and node-based validation of all HTML files (valid structure, correct wording, working JS). Print CSS styles removed from index.html since templates are now self-contained. Post-review fix: restored dropped sentence in clause 1.3 of agreement.html ('Ruralift ग्राहक का न्यासी, प्रत्ययी, एजेंट या कानूनी प्रतिनिधि नहीं है।')."
 }
