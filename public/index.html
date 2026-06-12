@@ -147,8 +147,11 @@ textarea { resize: vertical; min-height: 70px; }
 .toast.show { opacity: 1; }
 
 /* ===== PDF BADGE ===== */
-.badge-pdf { background: #dcfce7; color: #16a34a; font-size: 11px; padding: 2px 7px; border-radius: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 3px; }
-.badge-pdf svg { width: 12px; height: 12px; }
+.badge-pdf { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #15803d; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #86efac; box-shadow: 0 1px 3px rgba(22,163,74,.15); }
+.badge-pdf svg { width: 13px; height: 13px; }
+
+/* ===== DELETE BUTTON SPACING ===== */
+.btn-danger.btn-sm { margin-left: 12px; }
 
 /* ===== UPLOAD SECTION ===== */
 .upload-section { margin-top: 20px; }
@@ -520,7 +523,7 @@ async function loadCustomers(q = '') {
 
 function rowHtml(c, showLoan = false) {
   const loan = showLoan ? `<td>${c.loanAmt ? 'रु. ' + Number(c.loanAmt).toLocaleString('en-IN') : '—'}</td>` : '';
-  const pdfBadge = c.agreementPdf ? `<span class="badge-pdf"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>PDF</span> ` : '';
+  const pdfBadge = c.agreementPdf ? `<span class="badge-pdf"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Signed PDF Uploaded</span> ` : '';
   return `<tr>
     <td>${pdfBadge}<strong>${c.name || '—'}</strong></td>
     <td>${c.mobile || '—'}</td>
