@@ -1,0 +1,7 @@
+{
+  "task_id": "task-document-scanner",
+  "task_description": "Add a CamScanner-like document scanner page to the Ruralift CRM. The page allows users to search for existing customers, open the device camera, capture multiple photos, enhance them with document-quality processing (contrast, sharpening, B&W), combine into a PDF, and auto-upload to the selected customer's record. Fully mobile-first, separate URL (/scanner.html).",
+  "status": "in_progress",
+  "feature_order": ["FEAT-001"],
+  "blocked_reason": null
+}

@@ -1,0 +1,21 @@
+{
+  "project_type": "Node.js Express server serving static HTML/CSS/JS frontend (single-page app pattern in index.html)",
+  "language": "JavaScript (Node.js backend, vanilla JS frontend)",
+  "build_system": "npm - no build step, just 'npm install' for express dependency",
+  "test_framework": "None - no tests in the project",
+  "build_command": "npm install",
+  "test_command": "node -e \"require('./server.js')\" (basic syntax check - no test suite exists)",
+  "verification_instructions": "1. Run 'npm install' to install dependencies. 2. Start server with 'node server.js' and verify it starts without errors. 3. Verify /scanner.html is served as a static file. 4. Verify the new API endpoint for scanned document upload responds correctly.",
+  "snapshot_or_generated_files": null,
+  "setup_instructions": "cd /projects/sandbox/Reception-CRM && npm install",
+  "environment_constraints": "Open network - can install npm packages. No build tools needed. App uses only Express as a dependency. Frontend is plain HTML/CSS/JS with no framework or bundler. PDF generation must happen client-side in the browser (using jsPDF from CDN or bundled). Image processing (contrast, sharpening) must happen client-side using Canvas API.",
+  "contribution_requirements": "No formal contributing guide. Keep the same patterns: static HTML files in /public/, API routes in server.js, file storage in /uploads/, state in state.json.",
+  "key_patterns": "1. Each page is a separate .html file in /public/ (index.html, agreement.html, receipt.html). 2. Server has custom multipart parser (no multer). 3. Upload endpoints save files as 'type-{customerId}.pdf' in /uploads/. 4. Customer state stored in state.json as flat JSON. 5. CSS is inline in each HTML file. 6. No external CDN for existing pages - but scanner page will need jsPDF. 7. UI uses purple/navy color scheme with CSS custom properties. 8. Mobile-friendly meta viewport already set.",
+  "relevant_files": [
+    "server.js",
+    "public/index.html",
+    "package.json",
+    "state.json"
+  ],
+  "directory_structure": "Root: server.js (Express app), package.json, state.json (data). /public/: static HTML pages (index.html, agreement.html, receipt.html, logo.jpg). /uploads/: stored PDF files."
+}

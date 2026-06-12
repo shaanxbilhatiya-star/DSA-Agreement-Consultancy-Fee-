@@ -236,6 +236,35 @@ app.delete('/api/customers/:id/receipt', (req, res) => {
   res.json({ ok: true });
 });
 
+// Upload scanned document (from Doc Scanner page) for a customer
+app.post('/api/customers/:id/upload-scanned/:docType', async (req, res) => {
+  try {
+    const { docType } = req.params;
+    if (docType !== 'agreement' && docType !== 'receipt') {
+      return res.status(400).json({ error: 'Invalid document type. Must be "agreement" or "receipt".' });
+    }
+    const { filename, data } = await parseMultipart(req);
+    if (data.length > 10 * 1024 * 1024) {
+      return res.status(400).json({ error: 'File too large (max 10MB)' });
+    }
+    const state = loadState();
+    const idx = state.customers.findIndex(c => c.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'Customer not found' });
+
+    const savedFilename = docType + '-' + req.params.id + '.pdf';
+    fs.writeFileSync(path.join(UPLOADS_DIR, savedFilename), data);
+    if (docType === 'agreement') {
+      state.customers[idx].agreementPdf = savedFilename;
+    } else {
+      state.customers[idx].receiptPdf = savedFilename;
+    }
+    saveState(state);
+    res.json({ ok: true, filename: savedFilename });
+  } catch (e) {
+    res.status(400).json({ error: e.message || 'Upload failed' });
+  }
+});
+
 // Listen on all interfaces so any device on the same LAN can connect
 app.listen(PORT, '0.0.0.0', () => {
   console.log('\n===========================================');
