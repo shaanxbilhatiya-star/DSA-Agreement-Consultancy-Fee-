@@ -244,6 +244,9 @@ app.post('/api/customers/:id/upload-scanned/:docType', async (req, res) => {
       return res.status(400).json({ error: 'Invalid document type. Must be "agreement" or "receipt".' });
     }
     const { filename, data } = await parseMultipart(req);
+    if (!filename.toLowerCase().endsWith('.pdf')) {
+      return res.status(400).json({ error: 'Only PDF files are allowed' });
+    }
     if (data.length > 10 * 1024 * 1024) {
       return res.status(400).json({ error: 'File too large (max 10MB)' });
     }

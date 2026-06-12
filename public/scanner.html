@@ -353,8 +353,17 @@ let pages = []; // Array of { original: dataURL, enhanced: dataURL, rotation: 0 
 let selectedPageIndex = -1;
 let cameraStream = null;
 
+// Stop camera stream when navigating away or closing tab
+window.addEventListener('pagehide', () => {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+});
+
 // ===== CUSTOMER SEARCH =====
 let searchTimeout = null;
+let lastSearchResults = []; // Store results for event delegation
 function searchCustomers(q) {
   clearTimeout(searchTimeout);
   const results = document.getElementById('search-results');
@@ -363,20 +372,36 @@ function searchCustomers(q) {
     try {
       const res = await fetch('/api/customers?q=' + encodeURIComponent(q));
       const customers = await res.json();
+      lastSearchResults = customers;
       if (customers.length === 0) {
         results.innerHTML = '<div class="search-result-item"><em>No customers found</em></div>';
       } else {
-        results.innerHTML = customers.map(c => `
-          <div class="search-result-item" onclick="selectCustomer(${JSON.stringify(c).replace(/"/g, '&quot;')})">
-            <div class="name">${c.name || 'Unknown'}</div>
-            <div class="meta">${c.mobile || ''} | ${c.aadhaar || ''}</div>
-          </div>
-        `).join('');
+        results.innerHTML = customers.map((c, i) => {
+          const name = document.createElement('span');
+          name.textContent = c.name || 'Unknown';
+          const meta = document.createElement('span');
+          meta.textContent = (c.mobile || '') + ' | ' + (c.aadhaar || '');
+          return `<div class="search-result-item" data-customer-index="${i}">
+            <div class="name">${name.textContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}</div>
+            <div class="meta">${meta.textContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}</div>
+          </div>`;
+        }).join('');
       }
       results.classList.add('show');
     } catch (e) { console.error(e); }
   }, 300);
 }
+
+// Event delegation for search result clicks
+document.getElementById('search-results').addEventListener('click', function(e) {
+  const item = e.target.closest('.search-result-item[data-customer-index]');
+  if (item) {
+    const index = parseInt(item.getAttribute('data-customer-index'), 10);
+    if (lastSearchResults[index]) {
+      selectCustomer(lastSearchResults[index]);
+    }
+  }
+});
 
 function selectCustomer(customer) {
   selectedCustomer = customer;
@@ -447,7 +472,7 @@ function capturePhoto() {
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0);
   const dataURL = canvas.toDataURL('image/jpeg', 0.92);
-  pages.push({ original: dataURL, enhanced: dataURL, rotation: 0 });
+  pages.push({ captured: dataURL, original: dataURL, enhanced: dataURL, rotation: 0 });
   updatePageCount();
   showToast('Page ' + pages.length + ' captured');
   // Flash effect
@@ -694,13 +719,16 @@ function rotateImage() {
 
 function resetEnhance() {
   if (selectedPageIndex < 0) return;
-  // Reload from captured original (before any enhancement)
-  // Since we overwrite original on sharpen/rotate, reset sliders and redraw current
+  // Restore from the untouched captured original
+  pages[selectedPageIndex].original = pages[selectedPageIndex].captured;
+  pages[selectedPageIndex].enhanced = pages[selectedPageIndex].captured;
+  pages[selectedPageIndex].rotation = 0;
   document.getElementById('brightness-slider').value = 0;
   document.getElementById('contrast-slider').value = 0;
   document.getElementById('brightness-val').textContent = '0';
   document.getElementById('contrast-val').textContent = '0';
   drawEnhanced(selectedPageIndex);
+  renderPages();
 }
 
 // ===== PDF CREATION & UPLOAD =====
@@ -709,6 +737,10 @@ async function createPdfAndUpload() {
     showToast('Please select a customer and capture at least one page.');
     return;
   }
+
+  // Disable upload button to prevent double-tap
+  const uploadBtn = document.getElementById('upload-btn');
+  uploadBtn.disabled = true;
 
   const overlay = document.getElementById('upload-overlay');
   const card = document.getElementById('upload-card');
@@ -786,6 +818,8 @@ async function createPdfAndUpload() {
       <div class="error-text">${err.message}</div>
       <button class="btn btn-outline" style="margin-top:16px;flex:0;" onclick="document.getElementById('upload-overlay').classList.remove('show')">Close</button>
     `;
+    // Re-enable upload button on failure
+    document.getElementById('upload-btn').disabled = false;
   }
 }
 
