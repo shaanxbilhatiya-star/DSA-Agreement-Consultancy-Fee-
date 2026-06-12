@@ -315,6 +315,10 @@ textarea { resize: vertical; min-height: 70px; }
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               Print Loan Agreement + PDC Receipt
             </button>
+            <button class="btn btn-outline" id="send-email-btn" onclick="sendEmailToCustomer()">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              Send Email
+            </button>
           </div>
         </div>
       </div>
@@ -893,6 +897,60 @@ async function deleteReceiptPdf(customerId) {
   } catch (e) {
     toast('Failed to remove PDF');
   }
+}
+
+// ===== SEND EMAIL =====
+function sendEmailToCustomer() {
+  if (!currentCustomer) { toast('No customer selected'); return; }
+  const c = currentCustomer;
+  const fromEmail = 'controlcenter@ruralift.com';
+  const customerName = c.name || 'Valued Customer';
+  const loanAmt = c.loanAmt ? 'रु. ' + Number(c.loanAmt).toLocaleString('en-IN') : 'N/A';
+  const receiptNo = c.receiptNo || 'N/A';
+  const dateStr = c.date ? fmtDate(c.date) : new Date().toLocaleDateString('hi-IN');
+
+  const subject = encodeURIComponent(`Ruralift Consultancy - Loan Application Confirmation | ${customerName}`);
+  const body = encodeURIComponent(
+`Dear ${customerName},
+
+Greetings from Ruralift Consultancy!
+
+This email confirms that we have received your loan consultation application with the following details:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 Application Details:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Client Name: ${c.name || '—'}
+• Mobile: ${c.mobile || '—'}
+• Aadhaar: ${c.aadhaar || '—'}
+• Date: ${dateStr}
+• Receipt No: ${receiptNo}
+• Requested Loan Amount: ${loanAmt}
+• Consultation Fee: ₹500 (Paid)
+• Payment Mode: ${c.payMode || '—'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📌 Next Steps:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Our team will review your application within 2-3 business days.
+2. You will receive a call from our loan processing team.
+3. Please keep your original documents ready for verification.
+
+If you have any questions, please contact us at:
+📞 Phone: controlcenter@ruralift.com
+🏢 Ruralift Consultancy
+
+Thank you for choosing Ruralift!
+
+Warm Regards,
+Ruralift Consultancy Team
+controlcenter@ruralift.com
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This is an auto-generated email from Ruralift CRM.
+`);
+
+  const mailtoUrl = `https://mail.google.com/mail/?view=cm&fs=1&from=${encodeURIComponent(fromEmail)}&to=&su=${subject}&body=${body}`;
+  window.open(mailtoUrl, '_blank');
 }
 
 // ===== PRINT =====
