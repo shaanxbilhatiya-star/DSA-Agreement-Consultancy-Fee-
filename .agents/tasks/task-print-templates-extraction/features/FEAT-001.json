@@ -2,7 +2,7 @@
   "id": "FEAT-001",
   "type": "feat",
   "description": "Extract print templates into separate HTML files, fix print alignment, and update the CRM to use the new templates - all as one cohesive change.",
-  "status": "in_progress",
+  "status": "completed",
   "steps": [
     "Step 1: Create public/receipt.html - A standalone HTML file containing the Consultation Fee Receipt (parashmrsh shulk raseed). Copy the EXACT content from the #print-receipt div in public/index.html. The HTML file must: (a) be a complete standalone HTML page with proper DOCTYPE, head, charset, (b) include all the print-area CSS styles inline for proper rendering, (c) keep every Hindi/English word EXACTLY as-is from the existing template, (d) use JavaScript at the bottom that reads URL query parameters (or receives data via window.opener/postMessage) to fill the span fields (pr-receiptNo, pr-date, pr-place, pr-name, pr-mobile, pr-aadhaar, pr-payMode, pr-utr, pr-sig-name), (e) leave signature sections blank for physical signing, (f) auto-trigger window.print() after fields are filled, (g) reference logo.jpg (same directory), (h) fix print alignment: use proper @page margins (12mm top/bottom, 15mm left/right), ensure table columns don't overflow, use appropriate font sizes for A4 printing.",
     "Step 2: Create public/agreement.html - A standalone HTML file containing BOTH the Loan Agreement AND the PDC Receipt (they print together with a page-break between them). Copy the EXACT content from the #print-agreement div in public/index.html. The HTML file must: (a) be a complete standalone HTML page, (b) include all print-area CSS styles inline, (c) keep every Hindi/English word EXACTLY as-is, (d) use JavaScript to read URL query parameters to fill all span fields (ag-name, ag-aadhaar, ag-address, ag-mobile, ag-loanAmt, ag-loanAmtWords, ag-date, ag-place, ag-successFee, ag-successFeeWords, ag-chequeNo, ag-chequeBankBranch, ag-chequeHolder, ag-chequeAmt, ag-chequeDate, ag-decl-name, ag-sig-name, ag-sig-aadhaar, pdc-date, pdc-name, pdc-mobile, pdc-aadhaar, pdc-chequeNo, pdc-chequeBankBranch, pdc-chequeAmt, pdc-chequeDate, pdc-receipt-date, pdc-sig-name), (e) leave ALL signature/thumb impression areas blank, (f) auto-trigger window.print() after filling, (g) reference logo.jpg, (h) include the page-break div between agreement and PDC receipt, (i) fix print alignment: proper @page margins, table-layout: fixed with appropriate column widths, prevent content overflow, ensure readable font sizes on A4.",
@@ -29,5 +29,5 @@
     "Verify index.html printReceipt/printAgreement functions use window.open with query params"
   ],
   "blocked_reason": null,
-  "findings": ""
+  "findings": "npm install could not be run due to sandbox environment issue (proxy-bootstrap.js missing). Verified via node --check server.js (syntax OK), and node-based validation of all HTML files (valid structure, correct wording, working JS). Print CSS styles removed from index.html since templates are now self-contained."
 }
