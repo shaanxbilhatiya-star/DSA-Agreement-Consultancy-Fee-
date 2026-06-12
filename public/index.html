@@ -149,69 +149,69 @@ textarea { resize: vertical; min-height: 70px; }
   .print-area { display: none; }
   .print-area.print-active { display: block !important; background: #fff; }
   .no-print { display: none !important; }
-  @page { size: A4; margin: 14mm 18mm; }
+  @page { size: A4; margin: 7mm 12mm; }
 }
 
 /* ===== PRINT DOCUMENT STYLES ===== */
 .print-area {
   font-family: 'Times New Roman', serif;
-  font-size: 11pt;
+  font-size: 10pt;
   color: #000;
-  line-height: 1.5;
+  line-height: 1.35;
 }
 .print-area .doc-header {
   text-align: center;
   border-bottom: 3px double #000;
-  padding-bottom: 10px;
-  margin-bottom: 14px;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
 }
-.print-area .doc-logo { width: 160px; margin-bottom: 6px; display: block; margin-left: auto; margin-right: auto; }
-.print-area .doc-owner { font-size: 10.5pt; font-weight: bold; margin: 2px 0; }
-.print-area .doc-title-hi { font-size: 15pt; font-weight: bold; margin: 4px 0; }
-.print-area .doc-title-en { font-size: 12pt; font-weight: bold; }
-.print-area .doc-subtitle { font-size: 9.5pt; font-style: italic; }
+.print-area .doc-logo { width: 130px; margin-bottom: 4px; display: block; margin-left: auto; margin-right: auto; }
+.print-area .doc-owner { font-size: 9.5pt; font-weight: bold; margin: 1px 0; }
+.print-area .doc-title-hi { font-size: 13pt; font-weight: bold; margin: 3px 0; }
+.print-area .doc-title-en { font-size: 11pt; font-weight: bold; }
+.print-area .doc-subtitle { font-size: 8.5pt; font-style: italic; }
 .print-area .doc-table {
   width: 100%;
   border-collapse: collapse;
-  margin: 10px 0;
+  margin: 5px 0;
   table-layout: fixed;
   word-wrap: break-word;
 }
 .print-area .doc-table td,
 .print-area .doc-table th {
   border: 1px solid #555;
-  padding: 5px 8px;
-  font-size: 10.5pt;
+  padding: 3px 6px;
+  font-size: 9.5pt;
   vertical-align: top;
   word-wrap: break-word;
 }
 .print-area .doc-table th { background: #eee; font-weight: bold; text-align: left; }
-.print-area .field-line { display: inline-block; border-bottom: 1px solid #000; min-width: 160px; }
-.print-area .field-line-long { display: inline-block; border-bottom: 1px solid #000; min-width: 260px; }
+.print-area .field-line { display: inline-block; border-bottom: 1px solid #000; min-width: 140px; }
+.print-area .field-line-long { display: inline-block; border-bottom: 1px solid #000; min-width: 220px; }
 .print-area .section-head {
-  font-size: 12pt;
+  font-size: 10.5pt;
   font-weight: bold;
-  margin: 12px 0 5px;
-  border-bottom: 1.5px solid #333;
-  padding-bottom: 2px;
+  margin: 7px 0 3px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 1px;
   page-break-after: avoid;
 }
-.print-area .para { margin: 5px 0; line-height: 1.55; text-align: justify; }
-.print-area .sig-table { width: 100%; border-collapse: collapse; margin-top: 18px; }
-.print-area .sig-table td { padding: 8px 12px; vertical-align: top; font-size: 10.5pt; width: 50%; }
-.print-area .sig-box { border-top: 1px solid #000; margin-top: 38px; padding-top: 4px; font-size: 10pt; }
+.print-area .para { margin: 3px 0; line-height: 1.4; text-align: justify; }
+.print-area .sig-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.print-area .sig-table td { padding: 4px 8px; vertical-align: top; font-size: 9.5pt; width: 50%; }
+.print-area .sig-box { border-top: 1px solid #000; margin-top: 26px; padding-top: 3px; font-size: 9.5pt; }
 .print-area .no-border td { border: none; }
 .print-area .page-break { page-break-before: always; margin: 0; padding: 0; height: 0; }
-.print-area .purpose-box { border: 1px solid #777; padding: 8px 12px; margin: 8px 0; }
-.print-area .purpose-box ol { margin-left: 16px; }
-.print-area .purpose-box li { margin: 4px 0; line-height: 1.5; }
+.print-area .purpose-box { border: 1px solid #777; padding: 5px 10px; margin: 5px 0; }
+.print-area .purpose-box ol { margin-left: 14px; }
+.print-area .purpose-box li { margin: 2px 0; line-height: 1.35; }
 .print-area .footer-note {
-  font-size: 9.5pt;
+  font-size: 8.5pt;
   text-align: center;
   font-style: italic;
   border-top: 1px solid #aaa;
-  padding-top: 7px;
-  margin-top: 12px;
+  padding-top: 5px;
+  margin-top: 8px;
 }
 
 /* ===== ALERT ===== */
