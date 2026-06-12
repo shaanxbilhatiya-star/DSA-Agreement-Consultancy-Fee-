@@ -1,0 +1,1964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Scan Docs — Ruralift</title>
+
+<!-- jsPDF for client-side PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --purple: #6d28d9;
+  --purple-light: #ede9fe;
+  --purple-dark: #5b21b6;
+  --navy: #1e1b4b;
+  --navy-light: #312e81;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --green: #16a34a;
+  --green-light: #dcfce7;
+  --red: #dc2626;
+  --red-light: #fef2f2;
+  --amber: #d97706;
+  --amber-light: #fef3c7;
+  --white: #ffffff;
+  --radius: 14px;
+  --shadow: 0 4px 20px rgba(0,0,0,.12);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,.2);
+}
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: #0f0e17;
+  color: var(--gray-800);
+  overflow: hidden;
+}
+
+/* ===== SCREENS ===== */
+.screen { display: none; position: fixed; inset: 0; flex-direction: column; overflow: hidden; }
+.screen.active { display: flex; }
+
+/* ===== SCREEN 1: CUSTOMER PICKER ===== */
+#screen-pick {
+  background: var(--gray-50);
+  flex-direction: column;
+}
+.pick-header {
+  background: var(--navy);
+  padding: 16px 20px 14px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.pick-header .logo-text {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  flex: 1;
+}
+.pick-header .logo-text span {
+  color: #a78bfa;
+}
+.pick-header a {
+  color: rgba(255,255,255,.6);
+  font-size: 13px;
+  text-decoration: none;
+}
+.pick-header a:hover { color: #fff; }
+
+.pick-search-wrap {
+  background: var(--navy);
+  padding: 0 16px 16px;
+  flex-shrink: 0;
+}
+.pick-search-inner {
+  position: relative;
+}
+.pick-search-inner input {
+  width: 100%;
+  padding: 12px 16px 12px 44px;
+  background: rgba(255,255,255,.1);
+  border: 1.5px solid rgba(255,255,255,.15);
+  border-radius: 12px;
+  font-size: 15px;
+  color: #fff;
+  outline: none;
+  transition: all .2s;
+}
+.pick-search-inner input::placeholder { color: rgba(255,255,255,.45); }
+.pick-search-inner input:focus {
+  background: rgba(255,255,255,.15);
+  border-color: #a78bfa;
+}
+.pick-search-inner svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255,255,255,.5);
+}
+
+.pick-list {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.pick-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--gray-400);
+}
+.pick-empty svg { width: 48px; height: 48px; margin-bottom: 12px; }
+.pick-empty p { font-size: 14px; }
+
+.customer-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  border: 1.5px solid var(--gray-200);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all .18s;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.customer-card:active { transform: scale(.98); background: var(--purple-light); border-color: var(--purple); }
+.customer-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--purple), var(--navy-light));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.customer-info { flex: 1; min-width: 0; }
+.customer-name { font-size: 15px; font-weight: 600; color: var(--gray-800); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.customer-meta { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
+.customer-badges { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.cbadge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+.cbadge-ok   { background: var(--green-light); color: var(--green); }
+.cbadge-miss { background: var(--amber-light); color: var(--amber); }
+.customer-arrow { color: var(--gray-300); flex-shrink: 0; }
+
+/* ===== SCREEN 2: DOC TYPE PICKER ===== */
+#screen-doctype {
+  background: var(--gray-50);
+}
+.doctype-header {
+  background: var(--navy);
+  padding: 16px 20px 20px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  flex-shrink: 0;
+}
+.doctype-header .back-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.back-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.1);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+.back-btn:active { background: rgba(255,255,255,.2); }
+.doctype-header h1 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+}
+.doctype-header .customer-pill {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,.1);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+.doctype-header .customer-pill .pname {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+.doctype-header .customer-pill .pmeta {
+  font-size: 12px;
+  color: rgba(255,255,255,.6);
+  margin-top: 2px;
+}
+.doctype-header .customer-pill svg { color: #a78bfa; flex-shrink: 0; }
+
+.doctype-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.doctype-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 4px;
+}
+.doctype-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  border: 2px solid var(--gray-200);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all .18s;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.doctype-card:active { transform: scale(.98); }
+.doctype-card.agreement { border-color: #c4b5fd; }
+.doctype-card.agreement:active { background: #f5f3ff; }
+.doctype-card.receipt  { border-color: #86efac; }
+.doctype-card.receipt:active  { background: #f0fdf4; }
+.doctype-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.doctype-icon.purple { background: var(--purple-light); color: var(--purple); }
+.doctype-icon.green  { background: var(--green-light); color: var(--green); }
+.doctype-icon svg { width: 26px; height: 26px; }
+.doctype-text { flex: 1; }
+.doctype-text strong { font-size: 15px; font-weight: 600; color: var(--gray-800); display: block; }
+.doctype-text span   { font-size: 13px; color: var(--gray-500); margin-top: 2px; display: block; }
+.doctype-status { text-align: right; flex-shrink: 0; }
+.status-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  display: inline-block; margin-bottom: 4px;
+}
+.status-dot.ok   { background: var(--green); box-shadow: 0 0 0 3px var(--green-light); }
+.status-dot.miss { background: var(--amber); box-shadow: 0 0 0 3px var(--amber-light); }
+.status-text { font-size: 11px; font-weight: 600; color: var(--gray-500); display: block; }
+
+/* ===== SCREEN 3: CAMERA ===== */
+#screen-camera {
+  background: #000;
+  position: relative;
+}
+#camera-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.camera-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+}
+/* Document frame guide */
+.cam-frame-guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -54%);
+  width: 84%;
+  aspect-ratio: 0.707; /* A4 ratio */
+  border: 2px solid rgba(255,255,255,.5);
+  border-radius: 8px;
+  pointer-events: none;
+}
+.cam-frame-guide::before,
+.cam-frame-guide::after,
+.cam-corner-tl,
+.cam-corner-tr,
+.cam-corner-bl,
+.cam-corner-br {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-color: #a78bfa;
+  border-style: solid;
+}
+.cam-frame-guide::before  { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
+.cam-frame-guide::after   { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-radius: 0 6px 0 0; }
+.cam-corner-bl { bottom: -2px; left: -2px; border-width: 0 0 3px 3px; border-radius: 0 0 0 6px; }
+.cam-corner-br { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
+
+/* Top bar */
+.cam-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 20px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  background: linear-gradient(to bottom, rgba(0,0,0,.65) 0%, transparent 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: all;
+  z-index: 10;
+}
+.cam-topbar .cam-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+  flex: 1;
+}
+.cam-topbar .cam-count-badge {
+  background: var(--purple);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-right: 8px;
+}
+.cam-close-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.15);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: all;
+  -webkit-tap-highlight-color: transparent;
+}
+.cam-close-btn:active { background: rgba(255,255,255,.3); }
+
+/* Flash hint */
+.cam-hint {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255,255,255,.45);
+  font-size: 12px;
+  text-align: center;
+  pointer-events: none;
+  white-space: nowrap;
+  margin-top: 52%;
+}
+
+/* Bottom controls */
+.cam-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px 24px;
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+  background: linear-gradient(to top, rgba(0,0,0,.75) 0%, transparent 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: all;
+  z-index: 10;
+  gap: 16px;
+}
+/* Thumbnails strip */
+.cam-thumb-strip {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  overflow-x: auto;
+  max-width: calc(100% - 100px);
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.cam-thumb-strip::-webkit-scrollbar { display: none; }
+.cam-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,.5);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.cam-thumb.active { border-color: #a78bfa; }
+
+/* Shutter button */
+.cam-shutter-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.cam-shutter {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #fff;
+  border: 4px solid rgba(255,255,255,.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .12s;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.2);
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+.cam-shutter:active { transform: scale(.88); }
+.cam-shutter-inner {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #fff;
+  transition: background .1s;
+}
+.cam-shutter:active .cam-shutter-inner { background: var(--purple-light); }
+
+.cam-done-btn {
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+.cam-done-btn span { font-size: 10px; color: rgba(255,255,255,.7); }
+.cam-done-btn:disabled { background: rgba(109,40,217,.4); cursor: not-allowed; }
+.cam-done-btn:not(:disabled):active { background: var(--purple-dark); transform: scale(.96); }
+
+/* Flash effect */
+#cam-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 50;
+  transition: opacity .08s;
+}
+#cam-flash.flash { opacity: 0.75; }
+
+/* Switch camera */
+.cam-switch-btn {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.18);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 10;
+}
+.cam-switch-btn:active { background: rgba(255,255,255,.3); }
+
+/* ===== SCREEN 4: EDIT PAGE ===== */
+#screen-edit {
+  background: #1a1a2e;
+  flex-direction: column;
+}
+.edit-header {
+  background: var(--navy);
+  padding: 14px 16px;
+  padding-top: max(14px, env(safe-area-inset-top));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.edit-header h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  flex: 1;
+}
+.edit-header .page-indicator {
+  font-size: 13px;
+  color: rgba(255,255,255,.6);
+}
+.edit-canvas-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f0e17;
+  overflow: hidden;
+  position: relative;
+}
+#edit-canvas {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 6px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.5);
+  touch-action: none;
+}
+
+/* Edit tools */
+.edit-tools {
+  background: var(--navy);
+  padding: 14px 16px;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  flex-shrink: 0;
+}
+.edit-tools-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 12px;
+}
+.edit-tools-row::-webkit-scrollbar { display: none; }
+.tool-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,.08);
+  border: 1.5px solid transparent;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  color: rgba(255,255,255,.75);
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+  transition: all .15s;
+}
+.tool-btn svg { width: 20px; height: 20px; }
+.tool-btn:active, .tool-btn.active {
+  background: rgba(109,40,217,.35);
+  border-color: #a78bfa;
+  color: #fff;
+}
+
+/* Sliders */
+.edit-sliders { display: none; gap: 10px; flex-direction: column; margin-bottom: 12px; }
+.edit-sliders.show { display: flex; }
+.slider-row { display: flex; align-items: center; gap: 12px; }
+.slider-label { font-size: 12px; color: rgba(255,255,255,.6); width: 76px; flex-shrink: 0; }
+.slider-row input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 4px;
+  background: rgba(255,255,255,.2);
+  border-radius: 4px;
+  outline: none;
+}
+.slider-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #a78bfa;
+  cursor: pointer;
+  border: 2px solid #fff;
+}
+.slider-val { font-size: 12px; color: rgba(255,255,255,.6); width: 32px; text-align: right; }
+
+/* Edit nav */
+.edit-nav {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.edit-page-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.edit-page-nav::-webkit-scrollbar { display: none; }
+.edit-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid rgba(255,255,255,.2);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color .15s;
+}
+.edit-thumb.active { border-color: #a78bfa; }
+.edit-del-btn {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: rgba(220,38,38,.2);
+  border: 1.5px solid rgba(220,38,38,.4);
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.edit-del-btn:active { background: rgba(220,38,38,.35); }
+.edit-proceed-btn {
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 22px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.edit-proceed-btn svg { width: 16px; height: 16px; }
+.edit-proceed-btn:active { background: var(--purple-dark); transform: scale(.96); }
+
+/* ===== SCREEN 5: REVIEW & UPLOAD ===== */
+#screen-review {
+  background: var(--gray-50);
+}
+.review-header {
+  background: var(--navy);
+  padding: 14px 20px 16px;
+  padding-top: max(14px, env(safe-area-inset-top));
+  flex-shrink: 0;
+}
+.review-header .back-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+.review-header h1 { font-size: 17px; font-weight: 700; color: #fff; }
+.review-header .sub { font-size: 13px; color: rgba(255,255,255,.55); margin-top: 2px; }
+
+.review-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.review-info-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  border: 1.5px solid var(--gray-200);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.review-info-card .ric-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  margin-bottom: 8px;
+}
+.review-info-card .ric-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ric-avatar {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--purple), var(--navy-light));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+.ric-name { font-size: 16px; font-weight: 600; color: var(--gray-800); }
+.ric-meta { font-size: 13px; color: var(--gray-500); margin-top: 1px; }
+
+.review-doc-type-card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  border: 1.5px solid var(--gray-200);
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.review-doc-icon {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.review-doc-icon.purple { background: var(--purple-light); color: var(--purple); }
+.review-doc-icon.green  { background: var(--green-light); color: var(--green); }
+.review-doc-icon svg { width: 22px; height: 22px; }
+.review-doc-label { font-size: 15px; font-weight: 600; color: var(--gray-800); }
+.review-doc-sub   { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
+
+/* Pages grid */
+.review-pages-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-600);
+}
+.review-pages-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.review-page-thumb {
+  aspect-ratio: 0.707;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 2px solid var(--gray-200);
+  width: 100%;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+.review-page-thumb:active { border-color: var(--purple); }
+
+/* PDF size info */
+.pdf-size-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--green-light);
+  color: var(--green);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid #86efac;
+}
+.pdf-size-badge svg { width: 15px; height: 15px; }
+
+/* Upload button */
+.upload-btn-wrap {
+  padding: 0 0 8px;
+}
+.upload-big-btn {
+  width: 100%;
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 18px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  -webkit-tap-highlight-color: transparent;
+  transition: all .15s;
+  box-shadow: 0 4px 16px rgba(109,40,217,.35);
+}
+.upload-big-btn svg { width: 22px; height: 22px; }
+.upload-big-btn:active { transform: scale(.97); background: var(--purple-dark); }
+.upload-big-btn:disabled {
+  background: var(--gray-300);
+  color: var(--gray-500);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Progress overlay */
+#progress-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,14,23,.85);
+  z-index: 999;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 40px;
+}
+#progress-overlay.show { display: flex; }
+.progress-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px 28px;
+  text-align: center;
+  width: 100%;
+  max-width: 320px;
+  box-shadow: var(--shadow-lg);
+}
+.progress-icon {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--purple-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  color: var(--purple);
+}
+.progress-icon svg { width: 32px; height: 32px; }
+.progress-title { font-size: 17px; font-weight: 700; color: var(--gray-800); margin-bottom: 6px; }
+.progress-sub   { font-size: 14px; color: var(--gray-500); margin-bottom: 20px; }
+.progress-bar-wrap {
+  background: var(--gray-100);
+  border-radius: 10px;
+  height: 8px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.progress-bar {
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--purple), #a78bfa);
+  transition: width .3s ease;
+  width: 0%;
+}
+.progress-percent { font-size: 13px; color: var(--gray-400); }
+
+/* Success overlay */
+#success-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,14,23,.85);
+  z-index: 999;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+#success-overlay.show { display: flex; }
+.success-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 36px 28px;
+  text-align: center;
+  width: 100%;
+  max-width: 320px;
+  box-shadow: var(--shadow-lg);
+}
+.success-icon {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: var(--green-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: var(--green);
+  animation: pop .4s cubic-bezier(.26,1.4,.5,1);
+}
+@keyframes pop {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.success-icon svg { width: 42px; height: 42px; }
+.success-title { font-size: 20px; font-weight: 700; color: var(--gray-800); margin-bottom: 6px; }
+.success-sub   { font-size: 14px; color: var(--gray-500); margin-bottom: 24px; line-height: 1.5; }
+.success-actions { display: flex; flex-direction: column; gap: 10px; }
+.btn-success-primary {
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-success-secondary {
+  background: var(--gray-100);
+  color: var(--gray-700);
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn-success-primary:active  { background: var(--purple-dark); }
+.btn-success-secondary:active { background: var(--gray-200); }
+
+/* Error toast */
+#err-toast {
+  position: fixed;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--gray-800);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity .25s, transform .25s;
+  white-space: nowrap;
+  pointer-events: none;
+  max-width: 90vw;
+  text-align: center;
+}
+#err-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#err-toast.error { background: #7f1d1d; }
+#err-toast.success { background: #14532d; }
+
+/* No-camera fallback */
+.no-camera-msg {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: rgba(255,255,255,.6);
+  text-align: center;
+  padding: 40px;
+}
+.no-camera-msg svg { width: 56px; height: 56px; color: rgba(255,255,255,.3); }
+.no-camera-msg p { font-size: 15px; line-height: 1.5; }
+.file-pick-fallback {
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Rotate animation */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 1s linear infinite; }
+</style>
+</head>
+<body>
+
+<!-- ========== SCREEN 1: PICK CUSTOMER ========== -->
+<div class="screen active" id="screen-pick">
+  <div class="pick-header">
+    <div class="logo-text">Ruralift <span>Scan</span></div>
+    <a href="/">← Main CRM</a>
+  </div>
+  <div class="pick-search-wrap">
+    <div class="pick-search-inner">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/>
+      </svg>
+      <input type="text" id="pick-search" placeholder="Search customer name, mobile, Aadhaar…" oninput="searchCustomers(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+  </div>
+  <div class="pick-list" id="pick-list">
+    <div class="pick-empty" id="pick-loading">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="spin">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      <p>Loading customers…</p>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SCREEN 2: PICK DOC TYPE ========== -->
+<div class="screen" id="screen-doctype">
+  <div class="doctype-header">
+    <div class="back-row">
+      <button class="back-btn" onclick="goTo('pick')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <h1>Select Document</h1>
+    </div>
+    <div class="customer-pill">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+      </svg>
+      <div>
+        <div class="pname" id="dt-name">—</div>
+        <div class="pmeta" id="dt-meta">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="doctype-body">
+    <div class="doctype-label">Which document are you scanning?</div>
+    <div class="doctype-card agreement" onclick="selectDocType('agreement')">
+      <div class="doctype-icon purple">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <div class="doctype-text">
+        <strong>Loan Agreement</strong>
+        <span>Signed consultancy agreement + PDC receipt</span>
+      </div>
+      <div class="doctype-status">
+        <div class="status-dot" id="dt-status-agreement"></div>
+        <span class="status-text" id="dt-status-agreement-txt">—</span>
+      </div>
+    </div>
+    <div class="doctype-card receipt" onclick="selectDocType('receipt')">
+      <div class="doctype-icon green">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <div class="doctype-text">
+        <strong>₹500 Consultation Fee Receipt</strong>
+        <span>Signed receipt for initial consultation fee</span>
+      </div>
+      <div class="doctype-status">
+        <div class="status-dot" id="dt-status-receipt"></div>
+        <span class="status-text" id="dt-status-receipt-txt">—</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SCREEN 3: CAMERA ========== -->
+<div class="screen" id="screen-camera">
+  <video id="camera-video" autoplay playsinline muted></video>
+  <div id="cam-flash"></div>
+
+  <!-- Document frame corners -->
+  <div class="cam-frame-guide">
+    <div class="cam-corner-bl"></div>
+    <div class="cam-corner-br"></div>
+  </div>
+
+  <div class="cam-topbar">
+    <button class="cam-close-btn" onclick="stopCamera(); goTo('doctype')">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
+    <div class="cam-title" id="cam-title">Scan Document</div>
+    <span class="cam-count-badge" id="cam-count-badge" style="display:none">0</span>
+  </div>
+
+  <div class="cam-hint">Align document within the frame</div>
+
+  <button class="cam-switch-btn" onclick="switchCamera()" id="cam-switch-btn" title="Flip camera">
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+    </svg>
+  </button>
+
+  <div class="cam-bottom">
+    <div class="cam-thumb-strip" id="cam-thumb-strip"></div>
+    <div class="cam-shutter-wrap">
+      <button class="cam-shutter" onclick="captureFrame()" aria-label="Take photo">
+        <div class="cam-shutter-inner"></div>
+      </button>
+    </div>
+    <button class="cam-done-btn" id="cam-done-btn" onclick="proceedToEdit()" disabled>
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      Done
+      <span id="cam-done-count">0 pages</span>
+    </button>
+  </div>
+
+  <!-- Hidden file input fallback -->
+  <input type="file" id="cam-file-fallback" accept="image/*" multiple capture="environment" style="display:none" onchange="handleFallbackFiles(this.files)">
+
+  <div class="no-camera-msg" id="no-camera-msg" style="display:none">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0"/>
+    </svg>
+    <p>Camera not available.<br>Pick images from your gallery instead.</p>
+    <button class="file-pick-fallback" onclick="document.getElementById('cam-file-fallback').click()">
+      Choose Images
+    </button>
+  </div>
+</div>
+
+<!-- ========== SCREEN 4: EDIT / ENHANCE ========== -->
+<div class="screen" id="screen-edit">
+  <div class="edit-header">
+    <button class="back-btn" onclick="goTo('camera')">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </button>
+    <h2>Enhance & Review</h2>
+    <span class="page-indicator" id="edit-page-indicator">Page 1 of 1</span>
+  </div>
+
+  <div class="edit-canvas-wrap">
+    <canvas id="edit-canvas"></canvas>
+  </div>
+
+  <div class="edit-tools">
+    <!-- Filter buttons -->
+    <div class="edit-tools-row">
+      <button class="tool-btn active" id="tool-original" onclick="applyFilter('original')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 8v4l3 3"/></svg>
+        Original
+      </button>
+      <button class="tool-btn" id="tool-bw" onclick="applyFilter('bw')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M3 12h9m0 0v9m0-9V3"/></svg>
+        B&amp;W
+      </button>
+      <button class="tool-btn" id="tool-enhance" onclick="applyFilter('enhance')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        Enhance
+      </button>
+      <button class="tool-btn" id="tool-sharpen" onclick="applyFilter('sharpen')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+        Sharpen
+      </button>
+      <button class="tool-btn" id="tool-adjust" onclick="toggleAdjust()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+        Adjust
+      </button>
+      <button class="tool-btn" id="tool-rotate-l" onclick="rotatePage(-90)">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        Rotate L
+      </button>
+      <button class="tool-btn" id="tool-rotate-r" onclick="rotatePage(90)">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        Rotate R
+      </button>
+    </div>
+
+    <!-- Adjust sliders -->
+    <div class="edit-sliders" id="edit-sliders">
+      <div class="slider-row">
+        <span class="slider-label">Brightness</span>
+        <input type="range" id="sl-brightness" min="-100" max="100" value="0" oninput="onSliderChange()">
+        <span class="slider-val" id="sl-brightness-val">0</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">Contrast</span>
+        <input type="range" id="sl-contrast" min="-100" max="100" value="0" oninput="onSliderChange()">
+        <span class="slider-val" id="sl-contrast-val">0</span>
+      </div>
+    </div>
+
+    <!-- Page nav + proceed -->
+    <div class="edit-nav">
+      <div class="edit-page-nav" id="edit-page-nav"></div>
+      <button class="edit-del-btn" onclick="deleteCurrentPage()" title="Delete this page">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+      </button>
+      <button class="edit-proceed-btn" onclick="proceedToReview()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Review PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SCREEN 5: REVIEW & UPLOAD ========== -->
+<div class="screen" id="screen-review">
+  <div class="review-header">
+    <div class="back-row">
+      <button class="back-btn" onclick="goTo('edit')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <div>
+        <h1>Review & Upload</h1>
+        <div class="sub" id="review-sub">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="review-body">
+    <div class="review-info-card">
+      <div class="ric-title">Customer</div>
+      <div class="ric-row">
+        <div class="ric-avatar" id="review-avatar">?</div>
+        <div>
+          <div class="ric-name" id="review-name">—</div>
+          <div class="ric-meta" id="review-meta">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-doc-type-card" id="review-doctype-card">
+      <div class="review-doc-icon purple" id="review-doc-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <div>
+        <div class="review-doc-label" id="review-doc-label">—</div>
+        <div class="review-doc-sub" id="review-doc-sub">—</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="review-pages-label" id="review-pages-label" style="margin-bottom:10px">Pages (0)</div>
+      <div class="review-pages-grid" id="review-pages-grid"></div>
+    </div>
+
+    <div id="review-pdf-info" style="display:none">
+      <span class="pdf-size-badge" id="review-pdf-size">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        PDF ready — 0 KB
+      </span>
+    </div>
+
+    <div class="upload-btn-wrap">
+      <button class="upload-big-btn" id="upload-btn" onclick="doUpload()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        Upload PDF to CRM
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========== PROGRESS OVERLAY ========== -->
+<div id="progress-overlay">
+  <div class="progress-card">
+    <div class="progress-icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="spin">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+    </div>
+    <div class="progress-title" id="progress-title">Generating PDF…</div>
+    <div class="progress-sub" id="progress-sub">Please wait</div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+    <div class="progress-percent" id="progress-percent">0%</div>
+  </div>
+</div>
+
+<!-- ========== SUCCESS OVERLAY ========== -->
+<div id="success-overlay">
+  <div class="success-card">
+    <div class="success-icon">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+    <div class="success-title">Uploaded!</div>
+    <div class="success-sub" id="success-sub">Document saved successfully.</div>
+    <div class="success-actions">
+      <button class="btn-success-primary" onclick="scanAnother()">Scan Another Document</button>
+      <button class="btn-success-secondary" onclick="window.location.href='/'">← Back to Main CRM</button>
+    </div>
+  </div>
+</div>
+
+<!-- Error toast -->
+<div id="err-toast"></div>
+
+<script>
+// ==========================================
+// STATE
+// ==========================================
+const state = {
+  customers: [],
+  selectedCustomer: null,
+  docType: null,           // 'agreement' | 'receipt'
+  capturedPages: [],       // Array of { originalDataUrl, editedDataUrl, rotation, filter, brightness, contrast }
+  currentEditIndex: 0,
+  cameraStream: null,
+  facingMode: 'environment',
+  pdfBlob: null,
+};
+
+// ==========================================
+// SCREEN NAVIGATION
+// ==========================================
+function goTo(screenName) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + screenName).classList.add('active');
+}
+
+// ==========================================
+// SCREEN 1: LOAD CUSTOMERS
+// ==========================================
+async function loadCustomers(q = '') {
+  const list = document.getElementById('pick-list');
+  const url = q ? `/api/customers?q=${encodeURIComponent(q)}` : '/api/customers';
+  try {
+    const customers = await fetch(url).then(r => r.json());
+    state.customers = customers;
+    renderCustomerList(customers);
+  } catch(e) {
+    list.innerHTML = `<div class="pick-empty"><p>Failed to load customers.</p></div>`;
+  }
+}
+
+function renderCustomerList(customers) {
+  const list = document.getElementById('pick-list');
+  if (!customers.length) {
+    list.innerHTML = `<div class="pick-empty">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      <p>No customers found.</p>
+    </div>`;
+    return;
+  }
+  list.innerHTML = customers.map(c => {
+    const initial = (c.name || '?')[0].toUpperCase();
+    const hasPdf = c.agreementPdf || c.receiptPdf;
+    const missingAgreement = !c.agreementPdf;
+    const missingReceipt   = !c.receiptPdf;
+    const badges = [
+      missingAgreement ? `<span class="cbadge cbadge-miss">No Agreement</span>` : `<span class="cbadge cbadge-ok">Agreement ✓</span>`,
+      missingReceipt   ? `<span class="cbadge cbadge-miss">No Receipt</span>`   : `<span class="cbadge cbadge-ok">Receipt ✓</span>`,
+    ].join('');
+    return `<div class="customer-card" onclick="selectCustomer('${c.id}')">
+      <div class="customer-avatar">${initial}</div>
+      <div class="customer-info">
+        <div class="customer-name">${esc(c.name || '—')}</div>
+        <div class="customer-meta">${esc(c.mobile || '')}${c.receiptNo ? ' · ' + esc(c.receiptNo) : ''}</div>
+        <div class="customer-badges">${badges}</div>
+      </div>
+      <svg class="customer-arrow" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </div>`;
+  }).join('');
+}
+
+let searchTimer;
+function searchCustomers(q) {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => loadCustomers(q), 250);
+}
+
+function selectCustomer(id) {
+  const c = state.customers.find(x => x.id === id);
+  if (!c) return;
+  state.selectedCustomer = c;
+  // Update doctype screen
+  document.getElementById('dt-name').textContent = c.name || '—';
+  document.getElementById('dt-meta').textContent = (c.mobile || '') + (c.receiptNo ? ' · ' + c.receiptNo : '');
+  // Status indicators
+  setDtStatus('agreement', !!c.agreementPdf);
+  setDtStatus('receipt',   !!c.receiptPdf);
+  goTo('doctype');
+}
+
+function setDtStatus(type, hasDoc) {
+  const dot = document.getElementById('dt-status-' + type);
+  const txt = document.getElementById('dt-status-' + type + '-txt');
+  dot.className = 'status-dot ' + (hasDoc ? 'ok' : 'miss');
+  txt.textContent = hasDoc ? 'Uploaded' : 'Missing';
+}
+
+// ==========================================
+// SCREEN 2: SELECT DOC TYPE
+// ==========================================
+function selectDocType(type) {
+  state.docType = type;
+  state.capturedPages = [];
+  state.currentEditIndex = 0;
+  state.pdfBlob = null;
+  startCamera();
+}
+
+// ==========================================
+// SCREEN 3: CAMERA
+// ==========================================
+async function startCamera() {
+  goTo('camera');
+  document.getElementById('cam-count-badge').style.display = 'none';
+  document.getElementById('cam-count-badge').textContent = '0';
+  document.getElementById('cam-done-btn').disabled = true;
+  document.getElementById('cam-done-count').textContent = '0 pages';
+  document.getElementById('cam-thumb-strip').innerHTML = '';
+  document.getElementById('no-camera-msg').style.display = 'none';
+
+  const type = state.docType;
+  document.getElementById('cam-title').textContent = type === 'agreement' ? 'Scan Agreement' : 'Scan Receipt';
+
+  try {
+    if (state.cameraStream) stopCamera();
+    const constraints = {
+      video: {
+        facingMode: state.facingMode,
+        width: { ideal: 1920 },
+        height: { ideal: 1080 },
+      }
+    };
+    state.cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+    const video = document.getElementById('camera-video');
+    video.srcObject = state.cameraStream;
+    await video.play();
+  } catch(err) {
+    console.warn('Camera error:', err);
+    document.getElementById('camera-video').style.display = 'none';
+    document.getElementById('no-camera-msg').style.display = 'flex';
+  }
+}
+
+function stopCamera() {
+  if (state.cameraStream) {
+    state.cameraStream.getTracks().forEach(t => t.stop());
+    state.cameraStream = null;
+  }
+  const video = document.getElementById('camera-video');
+  video.srcObject = null;
+  video.style.display = 'block';
+}
+
+async function switchCamera() {
+  state.facingMode = state.facingMode === 'environment' ? 'user' : 'environment';
+  if (state.cameraStream) {
+    stopCamera();
+    try {
+      state.cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: state.facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } }
+      });
+      const video = document.getElementById('camera-video');
+      video.srcObject = state.cameraStream;
+      await video.play();
+    } catch(e) { showToast('Could not switch camera', 'error'); }
+  }
+}
+
+function captureFrame() {
+  const video = document.getElementById('camera-video');
+  if (!video.srcObject && !video.videoWidth) {
+    showToast('No camera — use Choose Images', 'error');
+    return;
+  }
+  // Flash effect
+  const flash = document.getElementById('cam-flash');
+  flash.classList.add('flash');
+  setTimeout(() => flash.classList.remove('flash'), 200);
+
+  // Draw to offscreen canvas at full resolution
+  const canvas = document.createElement('canvas');
+  canvas.width  = video.videoWidth  || 1920;
+  canvas.height = video.videoHeight || 1080;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+
+  addCapturedPage(dataUrl);
+}
+
+function handleFallbackFiles(files) {
+  const arr = Array.from(files);
+  arr.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => addCapturedPage(e.target.result);
+    reader.readAsDataURL(file);
+  });
+}
+
+function addCapturedPage(dataUrl) {
+  state.capturedPages.push({
+    originalDataUrl: dataUrl,
+    editedDataUrl: dataUrl,
+    rotation: 0,
+    filter: 'original',
+    brightness: 0,
+    contrast: 0,
+  });
+
+  const idx = state.capturedPages.length - 1;
+  const strip = document.getElementById('cam-thumb-strip');
+  const img = document.createElement('img');
+  img.src = dataUrl;
+  img.className = 'cam-thumb';
+  img.dataset.idx = idx;
+  img.onclick = () => {
+    // Preview tapped thumbnail — go to edit
+    state.currentEditIndex = idx;
+    proceedToEdit();
+  };
+  strip.appendChild(img);
+  strip.scrollLeft = strip.scrollWidth;
+
+  const n = state.capturedPages.length;
+  const badge = document.getElementById('cam-count-badge');
+  badge.textContent = n;
+  badge.style.display = 'inline-block';
+  document.getElementById('cam-done-btn').disabled = false;
+  document.getElementById('cam-done-count').textContent = n + (n === 1 ? ' page' : ' pages');
+  showToast('Page ' + n + ' captured', 'success');
+}
+
+function proceedToEdit() {
+  if (!state.capturedPages.length) { showToast('Capture at least one page first', 'error'); return; }
+  stopCamera();
+  state.currentEditIndex = 0;
+  buildEditScreen();
+  goTo('edit');
+}
+
+// ==========================================
+// SCREEN 4: EDIT
+// ==========================================
+function buildEditScreen() {
+  renderEditPage(state.currentEditIndex);
+  renderEditPageNav();
+}
+
+function renderEditPage(idx) {
+  state.currentEditIndex = idx;
+  const page = state.capturedPages[idx];
+  if (!page) return;
+
+  document.getElementById('edit-page-indicator').textContent =
+    `Page ${idx + 1} of ${state.capturedPages.length}`;
+
+  // Sync controls
+  const filterBtns = ['original','bw','enhance','sharpen','adjust'];
+  filterBtns.forEach(f => {
+    const btn = document.getElementById('tool-' + f);
+    if (btn) btn.classList.toggle('active', page.filter === f);
+  });
+  // Sliders
+  document.getElementById('sl-brightness').value = page.brightness;
+  document.getElementById('sl-contrast').value   = page.contrast;
+  document.getElementById('sl-brightness-val').textContent = page.brightness;
+  document.getElementById('sl-contrast-val').textContent   = page.contrast;
+
+  applyAndDrawCanvas(page);
+
+  // Update page nav
+  renderEditPageNav();
+}
+
+const EDIT_CANVAS_ID = 'edit-canvas';
+function applyAndDrawCanvas(page) {
+  const canvas = document.getElementById(EDIT_CANVAS_ID);
+  const ctx    = canvas.getContext('2d');
+  const img    = new Image();
+  img.onload   = () => {
+    // Handle rotation
+    const rot = ((page.rotation % 360) + 360) % 360;
+    const swapped = rot === 90 || rot === 270;
+    canvas.width  = swapped ? img.height : img.width;
+    canvas.height = swapped ? img.width  : img.height;
+
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((rot * Math.PI) / 180);
+    ctx.drawImage(img, -img.width / 2, -img.height / 2);
+    ctx.restore();
+
+    // Apply pixel filters
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    const filter = page.filter;
+    const bright = page.brightness;
+    const cont   = page.contrast;
+
+    for (let i = 0; i < data.length; i += 4) {
+      let r = data[i], g = data[i+1], b = data[i+2];
+
+      // Brightness
+      if (bright !== 0) {
+        const b2 = bright * 2.55;
+        r = clamp(r + b2); g = clamp(g + b2); b = clamp(b + b2);
+      }
+      // Contrast
+      if (cont !== 0) {
+        const f = (259 * (cont + 255)) / (255 * (259 - cont));
+        r = clamp(f * (r - 128) + 128);
+        g = clamp(f * (g - 128) + 128);
+        b = clamp(f * (b - 128) + 128);
+      }
+      // Filters
+      if (filter === 'bw') {
+        const grey = 0.299 * r + 0.587 * g + 0.114 * b;
+        r = g = b = clamp(grey);
+      } else if (filter === 'enhance') {
+        // Boost contrast + slight grey
+        const grey = 0.299 * r + 0.587 * g + 0.114 * b;
+        const f2   = 1.6;
+        r = clamp(f2 * (r - 128) + 128);
+        g = clamp(f2 * (g - 128) + 128);
+        b = clamp(f2 * (b - 128) + 128);
+        // Whiten background (pixels close to white get pushed to white)
+        if (r > 160 && g > 160 && b > 160) {
+          const boost = ((r + g + b) / 3 - 160) / 95;
+          r = clamp(r + boost * 40);
+          g = clamp(g + boost * 40);
+          b = clamp(b + boost * 40);
+        }
+        // Darken text
+        if (r < 80 && g < 80 && b < 80) {
+          r = clamp(r * 0.5); g = clamp(g * 0.5); b = clamp(b * 0.5);
+        }
+      } else if (filter === 'sharpen') {
+        // Unsharp: done via convolution below (pixel-by-pixel)
+        // Here we just boost contrast a bit
+        const f3 = 1.3;
+        r = clamp(f3 * (r - 128) + 128);
+        g = clamp(f3 * (g - 128) + 128);
+        b = clamp(f3 * (b - 128) + 128);
+      }
+
+      data[i] = r; data[i+1] = g; data[i+2] = b;
+    }
+    ctx.putImageData(imageData, 0, 0);
+
+    // Store edited data url
+    page.editedDataUrl = canvas.toDataURL('image/jpeg', 0.92);
+
+    // Update thumbnail in nav
+    renderEditPageNav();
+  };
+  img.src = page.originalDataUrl;
+}
+
+function clamp(v) { return Math.max(0, Math.min(255, Math.round(v))); }
+
+function applyFilter(filter) {
+  const page = state.capturedPages[state.currentEditIndex];
+  if (!page) return;
+  page.filter = filter;
+  // Reset sliders when switching filter (keep adjust separate)
+  if (filter !== 'adjust') {
+    document.getElementById('edit-sliders').classList.remove('show');
+  }
+  ['original','bw','enhance','sharpen','adjust'].forEach(f => {
+    const btn = document.getElementById('tool-' + f);
+    if (btn) btn.classList.toggle('active', f === filter);
+  });
+  applyAndDrawCanvas(page);
+}
+
+function toggleAdjust() {
+  const sliders = document.getElementById('edit-sliders');
+  const showing = sliders.classList.toggle('show');
+  document.getElementById('tool-adjust').classList.toggle('active', showing);
+}
+
+function onSliderChange() {
+  const page = state.capturedPages[state.currentEditIndex];
+  if (!page) return;
+  const b = parseInt(document.getElementById('sl-brightness').value);
+  const c = parseInt(document.getElementById('sl-contrast').value);
+  page.brightness = b;
+  page.contrast   = c;
+  document.getElementById('sl-brightness-val').textContent = b;
+  document.getElementById('sl-contrast-val').textContent   = c;
+  applyAndDrawCanvas(page);
+}
+
+function rotatePage(deg) {
+  const page = state.capturedPages[state.currentEditIndex];
+  if (!page) return;
+  page.rotation = ((page.rotation + deg) % 360 + 360) % 360;
+  applyAndDrawCanvas(page);
+}
+
+function deleteCurrentPage() {
+  if (state.capturedPages.length === 1) {
+    showToast('At least one page required. Go back to re-capture.', 'error');
+    return;
+  }
+  state.capturedPages.splice(state.currentEditIndex, 1);
+  state.currentEditIndex = Math.min(state.currentEditIndex, state.capturedPages.length - 1);
+  renderEditPage(state.currentEditIndex);
+}
+
+function renderEditPageNav() {
+  const nav = document.getElementById('edit-page-nav');
+  nav.innerHTML = state.capturedPages.map((p, i) => {
+    return `<img class="edit-thumb${i === state.currentEditIndex ? ' active' : ''}"
+      src="${p.editedDataUrl || p.originalDataUrl}"
+      onclick="renderEditPage(${i})" draggable="false">`;
+  }).join('');
+}
+
+// ==========================================
+// SCREEN 5: REVIEW & UPLOAD
+// ==========================================
+async function proceedToReview() {
+  if (!state.capturedPages.length) return;
+  const c = state.selectedCustomer;
+  const type = state.docType;
+
+  // Fill review screen
+  const initial = (c.name || '?')[0].toUpperCase();
+  document.getElementById('review-avatar').textContent = initial;
+  document.getElementById('review-name').textContent   = c.name || '—';
+  document.getElementById('review-meta').textContent   = (c.mobile || '') + (c.receiptNo ? ' · ' + c.receiptNo : '');
+  document.getElementById('review-sub').textContent    = state.capturedPages.length + ' page' + (state.capturedPages.length === 1 ? '' : 's');
+
+  if (type === 'agreement') {
+    document.getElementById('review-doc-label').textContent = 'Loan Agreement';
+    document.getElementById('review-doc-sub').textContent   = 'Signed consultancy agreement + PDC receipt';
+    document.getElementById('review-doc-icon').className    = 'review-doc-icon purple';
+  } else {
+    document.getElementById('review-doc-label').textContent = '₹500 Consultation Fee Receipt';
+    document.getElementById('review-doc-sub').textContent   = 'Signed consultation fee receipt';
+    document.getElementById('review-doc-icon').className    = 'review-doc-icon green';
+  }
+
+  // Render page grid
+  const grid = document.getElementById('review-pages-grid');
+  document.getElementById('review-pages-label').textContent = `Pages (${state.capturedPages.length})`;
+  grid.innerHTML = state.capturedPages.map((p, i) =>
+    `<img class="review-page-thumb" src="${p.editedDataUrl || p.originalDataUrl}">`
+  ).join('');
+
+  goTo('review');
+
+  // Generate PDF in background
+  showProgress('Generating PDF…', 'Compressing ' + state.capturedPages.length + ' page(s)…', 10);
+  try {
+    state.pdfBlob = await generatePDF();
+    const kb = Math.round(state.pdfBlob.size / 1024);
+    document.getElementById('review-pdf-info').style.display = 'block';
+    document.getElementById('review-pdf-size').innerHTML = `
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      PDF ready — ${kb} KB`;
+    document.getElementById('upload-btn').disabled = false;
+    hideProgress();
+  } catch(e) {
+    hideProgress();
+    showToast('PDF generation failed: ' + e.message, 'error');
+  }
+}
+
+async function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const pages = state.capturedPages;
+  let pdf;
+
+  for (let i = 0; i < pages.length; i++) {
+    const dataUrl = pages[i].editedDataUrl || pages[i].originalDataUrl;
+    // Get image dimensions
+    const dims = await getImageDimensions(dataUrl);
+    const w = dims.width;
+    const h = dims.height;
+
+    // Determine orientation
+    const orientation = w > h ? 'landscape' : 'portrait';
+    // A4 in mm: 210 x 297
+    const pageW = orientation === 'portrait'  ? 210 : 297;
+    const pageH = orientation === 'portrait'  ? 297 : 210;
+
+    if (!pdf) {
+      pdf = new jsPDF({ orientation, unit: 'mm', format: 'a4', compress: true });
+    } else {
+      pdf.addPage([pageW, pageH], orientation);
+    }
+
+    // Scale image to fill the page
+    const ratio = Math.min(pageW / w, pageH / h);
+    const imgW  = w * ratio;
+    const imgH  = h * ratio;
+    const xOff  = (pageW - imgW) / 2;
+    const yOff  = (pageH - imgH) / 2;
+
+    pdf.addImage(dataUrl, 'JPEG', xOff, yOff, imgW, imgH, '', 'FAST');
+    setProgress(10 + Math.round((i + 1) / pages.length * 70));
+  }
+
+  const pdfBytes = pdf.output('arraybuffer');
+  return new Blob([pdfBytes], { type: 'application/pdf' });
+}
+
+function getImageDimensions(dataUrl) {
+  return new Promise((res) => {
+    const img = new Image();
+    img.onload = () => res({ width: img.naturalWidth, height: img.naturalHeight });
+    img.src = dataUrl;
+  });
+}
+
+async function doUpload() {
+  if (!state.pdfBlob) { showToast('PDF not ready yet', 'error'); return; }
+  const c    = state.selectedCustomer;
+  const type = state.docType;
+  const endpoint = type === 'agreement'
+    ? `/api/customers/${c.id}/upload-agreement`
+    : `/api/customers/${c.id}/upload-receipt`;
+  const filename = type === 'agreement'
+    ? `agreement-${c.id}.pdf`
+    : `receipt-${c.id}.pdf`;
+
+  showProgress('Uploading…', 'Sending PDF to server…', 80);
+
+  try {
+    const formData = new FormData();
+    formData.append('file', state.pdfBlob, filename);
+
+    const resp = await fetch(endpoint, {
+      method: 'POST',
+      body: formData,
+    });
+    const json = await resp.json();
+    setProgress(100);
+    hideProgress();
+
+    if (!resp.ok) throw new Error(json.error || 'Upload failed');
+
+    // Refresh customer in local state
+    const updated = await fetch(`/api/customers/${c.id}`).then(r => r.json()).catch(() => null);
+    if (updated) state.selectedCustomer = updated;
+
+    showSuccess(
+      `${type === 'agreement' ? 'Agreement' : 'Receipt'} uploaded for ${c.name}.`
+    );
+  } catch(e) {
+    hideProgress();
+    showToast('Upload error: ' + (e.message || 'Unknown error'), 'error');
+  }
+}
+
+// ==========================================
+// PROGRESS / SUCCESS / TOAST
+// ==========================================
+function showProgress(title, sub, pct) {
+  document.getElementById('progress-title').textContent   = title;
+  document.getElementById('progress-sub').textContent     = sub;
+  document.getElementById('progress-bar').style.width    = pct + '%';
+  document.getElementById('progress-percent').textContent = pct + '%';
+  document.getElementById('progress-overlay').classList.add('show');
+}
+function setProgress(pct) {
+  document.getElementById('progress-bar').style.width    = pct + '%';
+  document.getElementById('progress-percent').textContent = pct + '%';
+}
+function hideProgress() {
+  document.getElementById('progress-overlay').classList.remove('show');
+}
+function showSuccess(msg) {
+  document.getElementById('success-sub').textContent = msg;
+  document.getElementById('success-overlay').classList.add('show');
+}
+function hideSuccess() {
+  document.getElementById('success-overlay').classList.remove('show');
+}
+function scanAnother() {
+  hideSuccess();
+  state.capturedPages = [];
+  state.pdfBlob = null;
+  state.docType = null;
+  // Update customer badges in doctype screen
+  const c = state.selectedCustomer;
+  if (c) {
+    setDtStatus('agreement', !!c.agreementPdf);
+    setDtStatus('receipt',   !!c.receiptPdf);
+  }
+  goTo('doctype');
+}
+
+let toastTimer;
+function showToast(msg, type = '') {
+  clearTimeout(toastTimer);
+  const t = document.getElementById('err-toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  toastTimer = setTimeout(() => { t.className = ''; }, 3000);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ==========================================
+// INIT
+// ==========================================
+window.addEventListener('DOMContentLoaded', () => {
+  loadCustomers();
+});
+
+// Handle back button on Android
+window.addEventListener('popstate', () => {
+  // intentional: do nothing, let our own nav handle it
+});
+</script>
+</body>
+</html>
