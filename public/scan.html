@@ -1138,40 +1138,19 @@ html, body {
 .crop-btn.auto { background: rgba(167,139,250,.2); color: #a78bfa; border: 1.5px solid #a78bfa; }
 .crop-btn.auto:active { background: rgba(167,139,250,.35); }
 
-/* Add More Pages button */
-.add-more-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  margin-top: 12px;
-  padding: 12px;
-  border-radius: 12px;
-  border: 2px dashed var(--purple);
-  background: var(--purple-light);
-  color: var(--purple);
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: background .15s;
-}
-.add-more-btn:active { background: #ede9fe; }
-.add-more-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
-
 /* Review page remove button overlay */
 .review-page-wrap {
   position: relative;
 }
-.review-page-view-btn {
+/* Review page remove button */
+.review-page-remove {
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: rgba(109,40,217,.85);
+  background: rgba(220,38,38,.9);
   border: 2px solid #fff;
   color: #fff;
   display: flex;
@@ -1182,8 +1161,29 @@ html, body {
   -webkit-tap-highlight-color: transparent;
   box-shadow: 0 2px 6px rgba(0,0,0,.3);
 }
-.review-page-view-btn:active { background: #5b21b6; transform: scale(.9); }
-.review-page-view-btn svg { width: 14px; height: 14px; }
+.review-page-remove:active { background: #991b1b; transform: scale(.9); }
+.review-page-remove svg { width: 13px; height: 13px; }
+
+/* Add more pages tile in grid */
+.review-page-add-tile {
+  width: 100%;
+  aspect-ratio: 3/4;
+  border-radius: 10px;
+  border: 2px dashed var(--purple);
+  background: var(--purple-light);
+  color: var(--purple);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  font-size: 12px;
+  font-weight: 700;
+}
+.review-page-add-tile:active { background: #ede9fe; }
+.review-page-add-tile svg { width: 28px; height: 28px; }
 
 /* PWA Install Banner */
 #pwa-install-banner {
@@ -1497,13 +1497,6 @@ html, body {
     <div>
       <div class="review-pages-label" id="review-pages-label" style="margin-bottom:10px">Pages (0)</div>
       <div class="review-pages-grid" id="review-pages-grid"></div>
-      <button class="add-more-btn" onclick="addMorePages()">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        Add More Pages
-      </button>
     </div>
 
     <div id="review-pdf-info" style="display:none">
@@ -2212,14 +2205,20 @@ async function proceedToReview() {
   grid.innerHTML = state.capturedPages.map((p, i) =>
     `<div class="review-page-wrap" onclick="openPageViewer(${i})">
       <img class="review-page-thumb" src="${p.editedDataUrl || p.originalDataUrl}">
-      <div class="review-page-view-btn" title="View page">
+      <div class="review-page-remove" onclick="event.stopPropagation();removeReviewPage(${i})" title="Remove page">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
       </div>
     </div>`
-  ).join('');
+  ).join('') +
+  `<div class="review-page-add-tile" onclick="addMorePages()" title="Add more pages">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11v4m-2-2h4"/>
+    </svg>
+    <span>Add</span>
+  </div>`;
 
   goTo('review');
 
