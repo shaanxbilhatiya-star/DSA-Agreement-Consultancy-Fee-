@@ -1011,6 +1011,119 @@ html, body {
 /* Rotate animation */
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { animation: spin 1s linear infinite; }
+
+/* ===== CROP OVERLAY ===== */
+#crop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.95);
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+}
+#crop-overlay.show { display: flex; }
+.crop-header {
+  background: var(--navy);
+  padding: 14px 16px;
+  padding-top: max(14px, env(safe-area-inset-top));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.crop-header h2 { font-size: 16px; font-weight: 700; color: #fff; flex: 1; }
+.crop-header .crop-hint-text { font-size: 12px; color: rgba(255,255,255,.5); }
+.crop-canvas-wrap {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: none;
+}
+#crop-canvas {
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+}
+/* Crop handles overlay on canvas */
+.crop-selection {
+  position: absolute;
+  border: 2px solid #a78bfa;
+  background: rgba(167,139,250,.08);
+  pointer-events: none;
+  z-index: 5;
+}
+.crop-handle {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: #a78bfa;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  pointer-events: all;
+  touch-action: none;
+  z-index: 10;
+  transform: translate(-50%, -50%);
+}
+.crop-dim-overlay {
+  position: absolute;
+  background: rgba(0,0,0,.55);
+  pointer-events: none;
+}
+.crop-footer {
+  background: var(--navy);
+  padding: 14px 16px;
+  padding-bottom: max(14px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.crop-btn {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  text-align: center;
+}
+.crop-btn.cancel { background: rgba(255,255,255,.1); color: #fff; }
+.crop-btn.cancel:active { background: rgba(255,255,255,.2); }
+.crop-btn.confirm { background: var(--purple); color: #fff; }
+.crop-btn.confirm:active { background: var(--purple-dark); }
+.crop-btn.auto { background: rgba(167,139,250,.2); color: #a78bfa; border: 1.5px solid #a78bfa; }
+.crop-btn.auto:active { background: rgba(167,139,250,.35); }
+
+/* Review page remove button overlay */
+.review-page-wrap {
+  position: relative;
+}
+.review-page-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(220,38,38,.85);
+  border: 2px solid #fff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.review-page-remove:active { background: #991b1b; transform: scale(.9); }
+.review-page-remove svg { width: 14px; height: 14px; }
 </style>
 </head>
 <body>
@@ -1019,7 +1132,7 @@ html, body {
 <div class="screen active" id="screen-pick">
   <div class="pick-header">
     <div class="logo-text">Ruralift <span>Scan</span></div>
-    <a href="/">← Main CRM</a>
+    <a href="/scan">← Scan Home</a>
   </div>
   <div class="pick-search-wrap">
     <div class="pick-search-inner">
@@ -1202,6 +1315,10 @@ html, body {
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         Rotate R
       </button>
+      <button class="tool-btn" id="tool-crop" onclick="openCropUI()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 3v4M3 7h4m10 0h4M17 3v4m0 10v4m4-4h-4M7 17H3m4 4v-4"/></svg>
+        Crop
+      </button>
     </div>
 
     <!-- Adjust sliders -->
@@ -1329,8 +1446,36 @@ html, body {
     <div class="success-sub" id="success-sub">Document saved successfully.</div>
     <div class="success-actions">
       <button class="btn-success-primary" onclick="scanAnother()">Scan Another Document</button>
-      <button class="btn-success-secondary" onclick="window.location.href='/'">← Back to Main CRM</button>
+      <button class="btn-success-secondary" onclick="goTo('pick')">← Back to Scan Home</button>
     </div>
+  </div>
+</div>
+
+<!-- ========== CROP OVERLAY ========== -->
+<div id="crop-overlay">
+  <div class="crop-header">
+    <h2>Crop Page</h2>
+    <span class="crop-hint-text">Drag corners to adjust</span>
+  </div>
+  <div class="crop-canvas-wrap" id="crop-canvas-wrap">
+    <canvas id="crop-canvas"></canvas>
+    <!-- Dim overlays -->
+    <div class="crop-dim-overlay" id="crop-dim-top"></div>
+    <div class="crop-dim-overlay" id="crop-dim-bottom"></div>
+    <div class="crop-dim-overlay" id="crop-dim-left"></div>
+    <div class="crop-dim-overlay" id="crop-dim-right"></div>
+    <!-- Selection box -->
+    <div class="crop-selection" id="crop-selection"></div>
+    <!-- 4 corner handles -->
+    <div class="crop-handle" id="crop-handle-tl" data-corner="tl"></div>
+    <div class="crop-handle" id="crop-handle-tr" data-corner="tr"></div>
+    <div class="crop-handle" id="crop-handle-bl" data-corner="bl"></div>
+    <div class="crop-handle" id="crop-handle-br" data-corner="br"></div>
+  </div>
+  <div class="crop-footer">
+    <button class="crop-btn cancel" onclick="cancelCrop()">Skip</button>
+    <button class="crop-btn auto" onclick="autoCropAction()">Auto Crop</button>
+    <button class="crop-btn confirm" onclick="confirmCrop()">✓ Apply</button>
   </div>
 </div>
 
@@ -1538,14 +1683,15 @@ function handleFallbackFiles(files) {
 }
 
 function addCapturedPage(dataUrl) {
-  state.capturedPages.push({
+  const pageObj = {
     originalDataUrl: dataUrl,
     editedDataUrl: dataUrl,
     rotation: 0,
-    filter: 'original',
+    filter: 'enhance',   // Auto-enhance by default
     brightness: 0,
     contrast: 0,
-  });
+  };
+  state.capturedPages.push(pageObj);
 
   const idx = state.capturedPages.length - 1;
   const strip = document.getElementById('cam-thumb-strip');
@@ -1554,7 +1700,6 @@ function addCapturedPage(dataUrl) {
   img.className = 'cam-thumb';
   img.dataset.idx = idx;
   img.onclick = () => {
-    // Preview tapped thumbnail — go to edit
     state.currentEditIndex = idx;
     proceedToEdit();
   };
@@ -1568,6 +1713,9 @@ function addCapturedPage(dataUrl) {
   document.getElementById('cam-done-btn').disabled = false;
   document.getElementById('cam-done-count').textContent = n + (n === 1 ? ' page' : ' pages');
   showToast('Page ' + n + ' captured', 'success');
+
+  // Auto-crop: open crop UI immediately for this page
+  openAutoCropForPage(idx);
 }
 
 function proceedToEdit() {
@@ -1782,11 +1930,18 @@ async function proceedToReview() {
     document.getElementById('review-doc-icon').className    = 'review-doc-icon green';
   }
 
-  // Render page grid
+  // Render page grid with remove buttons
   const grid = document.getElementById('review-pages-grid');
   document.getElementById('review-pages-label').textContent = `Pages (${state.capturedPages.length})`;
   grid.innerHTML = state.capturedPages.map((p, i) =>
-    `<img class="review-page-thumb" src="${p.editedDataUrl || p.originalDataUrl}">`
+    `<div class="review-page-wrap">
+      <img class="review-page-thumb" src="${p.editedDataUrl || p.originalDataUrl}">
+      <div class="review-page-remove" onclick="removeReviewPage(${i})" title="Remove page">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </div>
+    </div>`
   ).join('');
 
   goTo('review');
@@ -1949,16 +2104,350 @@ function esc(s) {
 }
 
 // ==========================================
+// REMOVE PAGE FROM REVIEW
+// ==========================================
+function removeReviewPage(idx) {
+  if (state.capturedPages.length <= 1) {
+    showToast('At least one page required', 'error');
+    return;
+  }
+  state.capturedPages.splice(idx, 1);
+  state.pdfBlob = null;
+  // Re-render the review screen
+  proceedToReview();
+  showToast('Page removed', 'success');
+}
+
+// ==========================================
+// CROP SYSTEM
+// ==========================================
+const cropState = {
+  pageIndex: -1,
+  imgEl: null,
+  canvasRect: null,   // bounding rect of canvas on screen
+  imgW: 0,
+  imgH: 0,
+  displayW: 0,
+  displayH: 0,
+  offsetX: 0,
+  offsetY: 0,
+  // Crop box in image-pixel coordinates
+  x1: 0, y1: 0, x2: 0, y2: 0,
+  activeHandle: null,
+  touchStartX: 0,
+  touchStartY: 0,
+  handleStartVal: null,
+};
+
+function openAutoCropForPage(idx) {
+  cropState.pageIndex = idx;
+  const page = state.capturedPages[idx];
+  const overlay = document.getElementById('crop-overlay');
+  overlay.classList.add('show');
+
+  const img = new Image();
+  img.onload = () => {
+    cropState.imgEl = img;
+    cropState.imgW = img.naturalWidth;
+    cropState.imgH = img.naturalHeight;
+
+    // Draw to canvas
+    const canvas = document.getElementById('crop-canvas');
+    const wrap = document.getElementById('crop-canvas-wrap');
+    const wrapRect = wrap.getBoundingClientRect();
+
+    // Fit image in wrap
+    const scale = Math.min(wrapRect.width / img.naturalWidth, wrapRect.height / img.naturalHeight, 1);
+    const dw = Math.round(img.naturalWidth * scale);
+    const dh = Math.round(img.naturalHeight * scale);
+    canvas.width = dw;
+    canvas.height = dh;
+    canvas.style.width = dw + 'px';
+    canvas.style.height = dh + 'px';
+
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, dw, dh);
+
+    cropState.displayW = dw;
+    cropState.displayH = dh;
+
+    // Wait a frame to get correct canvas position
+    requestAnimationFrame(() => {
+      cropState.canvasRect = canvas.getBoundingClientRect();
+      cropState.offsetX = cropState.canvasRect.left;
+      cropState.offsetY = cropState.canvasRect.top;
+
+      // Auto-detect crop region
+      performAutoCrop();
+      updateCropUI();
+    });
+  };
+  img.src = page.originalDataUrl;
+}
+
+function openCropUI() {
+  openAutoCropForPage(state.currentEditIndex);
+}
+
+function performAutoCrop() {
+  // Smart auto-crop: analyze the image to find document edges
+  const canvas = document.getElementById('crop-canvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const data = imageData.data;
+
+  // Edge detection: find the bounding box of non-background content
+  const threshold = 240; // pixels brighter than this are "background"
+  let minX = w, minY = h, maxX = 0, maxY = 0;
+  const step = 2; // sample every 2 pixels for speed
+
+  for (let y = 0; y < h; y += step) {
+    for (let x = 0; x < w; x += step) {
+      const idx = (y * w + x) * 4;
+      const r = data[idx], g = data[idx+1], b = data[idx+2];
+      // If pixel is not near-white background
+      if (r < threshold || g < threshold || b < threshold) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+
+  // Add small padding
+  const pad = Math.round(Math.min(w, h) * 0.01);
+  minX = Math.max(0, minX - pad);
+  minY = Math.max(0, minY - pad);
+  maxX = Math.min(w - 1, maxX + pad);
+  maxY = Math.min(h - 1, maxY + pad);
+
+  // If auto-detect failed (e.g., entire image is dark), use 5% inset
+  if (maxX <= minX || maxY <= minY || (maxX - minX) < w * 0.3 || (maxY - minY) < h * 0.3) {
+    minX = Math.round(w * 0.03);
+    minY = Math.round(h * 0.03);
+    maxX = Math.round(w * 0.97);
+    maxY = Math.round(h * 0.97);
+  }
+
+  // Convert display coords to image coords
+  const sx = cropState.imgW / cropState.displayW;
+  const sy = cropState.imgH / cropState.displayH;
+  cropState.x1 = Math.round(minX * sx);
+  cropState.y1 = Math.round(minY * sy);
+  cropState.x2 = Math.round(maxX * sx);
+  cropState.y2 = Math.round(maxY * sy);
+}
+
+function autoCropAction() {
+  performAutoCrop();
+  updateCropUI();
+  showToast('Auto crop applied', 'success');
+}
+
+function updateCropUI() {
+  const canvas = document.getElementById('crop-canvas');
+  const canvasRect = canvas.getBoundingClientRect();
+  const wrap = document.getElementById('crop-canvas-wrap');
+  const wrapRect = wrap.getBoundingClientRect();
+
+  cropState.canvasRect = canvasRect;
+  cropState.offsetX = canvasRect.left;
+  cropState.offsetY = canvasRect.top;
+
+  // Convert image coords to display coords
+  const sx = cropState.displayW / cropState.imgW;
+  const sy = cropState.displayH / cropState.imgH;
+  const dx1 = cropState.x1 * sx;
+  const dy1 = cropState.y1 * sy;
+  const dx2 = cropState.x2 * sx;
+  const dy2 = cropState.y2 * sy;
+
+  // Position relative to crop-canvas-wrap
+  const offX = canvasRect.left - wrapRect.left;
+  const offY = canvasRect.top - wrapRect.top;
+
+  const sel = document.getElementById('crop-selection');
+  sel.style.left   = (offX + dx1) + 'px';
+  sel.style.top    = (offY + dy1) + 'px';
+  sel.style.width  = (dx2 - dx1) + 'px';
+  sel.style.height = (dy2 - dy1) + 'px';
+
+  // Handles
+  document.getElementById('crop-handle-tl').style.left = (offX + dx1) + 'px';
+  document.getElementById('crop-handle-tl').style.top  = (offY + dy1) + 'px';
+  document.getElementById('crop-handle-tr').style.left = (offX + dx2) + 'px';
+  document.getElementById('crop-handle-tr').style.top  = (offY + dy1) + 'px';
+  document.getElementById('crop-handle-bl').style.left = (offX + dx1) + 'px';
+  document.getElementById('crop-handle-bl').style.top  = (offY + dy2) + 'px';
+  document.getElementById('crop-handle-br').style.left = (offX + dx2) + 'px';
+  document.getElementById('crop-handle-br').style.top  = (offY + dy2) + 'px';
+
+  // Dim overlays (darken outside crop area)
+  const cW = canvasRect.width;
+  const cH = canvasRect.height;
+  document.getElementById('crop-dim-top').style.cssText    = `left:${offX}px; top:${offY}px; width:${cW}px; height:${dy1}px;`;
+  document.getElementById('crop-dim-bottom').style.cssText = `left:${offX}px; top:${offY + dy2}px; width:${cW}px; height:${cH - dy2}px;`;
+  document.getElementById('crop-dim-left').style.cssText   = `left:${offX}px; top:${offY + dy1}px; width:${dx1}px; height:${dy2 - dy1}px;`;
+  document.getElementById('crop-dim-right').style.cssText  = `left:${offX + dx2}px; top:${offY + dy1}px; width:${cW - dx2}px; height:${dy2 - dy1}px;`;
+}
+
+function confirmCrop() {
+  const page = state.capturedPages[cropState.pageIndex];
+  if (!page) { closeCropOverlay(); return; }
+
+  // Crop the original image
+  const img = cropState.imgEl;
+  const cx = Math.max(0, cropState.x1);
+  const cy = Math.max(0, cropState.y1);
+  const cw = Math.min(cropState.imgW, cropState.x2) - cx;
+  const ch = Math.min(cropState.imgH, cropState.y2) - cy;
+
+  if (cw < 50 || ch < 50) {
+    showToast('Crop area too small', 'error');
+    return;
+  }
+
+  const tempCanvas = document.createElement('canvas');
+  tempCanvas.width = cw;
+  tempCanvas.height = ch;
+  const tctx = tempCanvas.getContext('2d');
+  tctx.drawImage(img, cx, cy, cw, ch, 0, 0, cw, ch);
+
+  const croppedDataUrl = tempCanvas.toDataURL('image/jpeg', 0.92);
+  page.originalDataUrl = croppedDataUrl;
+  page.editedDataUrl = croppedDataUrl;
+
+  closeCropOverlay();
+
+  // Update thumbnail in cam strip
+  const strip = document.getElementById('cam-thumb-strip');
+  const thumbs = strip.querySelectorAll('.cam-thumb');
+  if (thumbs[cropState.pageIndex]) {
+    thumbs[cropState.pageIndex].src = croppedDataUrl;
+  }
+
+  // If we're in edit screen, refresh
+  if (document.getElementById('screen-edit').classList.contains('active')) {
+    applyAndDrawCanvas(page);
+    renderEditPageNav();
+  }
+
+  showToast('Cropped successfully', 'success');
+}
+
+function cancelCrop() {
+  closeCropOverlay();
+}
+
+function closeCropOverlay() {
+  document.getElementById('crop-overlay').classList.remove('show');
+  cropState.activeHandle = null;
+}
+
+// Touch/mouse handling for crop handles
+(function setupCropTouchHandlers() {
+  const handles = ['crop-handle-tl', 'crop-handle-tr', 'crop-handle-bl', 'crop-handle-br'];
+
+  function getEventXY(e) {
+    if (e.touches && e.touches.length) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    return { x: e.clientX, y: e.clientY };
+  }
+
+  function onStart(e) {
+    e.preventDefault();
+    const corner = e.currentTarget.dataset.corner;
+    cropState.activeHandle = corner;
+    const pt = getEventXY(e);
+    cropState.touchStartX = pt.x;
+    cropState.touchStartY = pt.y;
+    cropState.handleStartVal = { x1: cropState.x1, y1: cropState.y1, x2: cropState.x2, y2: cropState.y2 };
+  }
+
+  function onMove(e) {
+    if (!cropState.activeHandle) return;
+    e.preventDefault();
+    const pt = getEventXY(e);
+    const dx = pt.x - cropState.touchStartX;
+    const dy = pt.y - cropState.touchStartY;
+
+    // Convert screen delta to image pixels
+    const sx = cropState.imgW / cropState.displayW;
+    const sy = cropState.imgH / cropState.displayH;
+    const imgDx = dx * sx;
+    const imgDy = dy * sy;
+
+    const s = cropState.handleStartVal;
+    const minSize = 80; // min crop size in image pixels
+
+    switch(cropState.activeHandle) {
+      case 'tl':
+        cropState.x1 = Math.max(0, Math.min(s.x1 + imgDx, cropState.x2 - minSize));
+        cropState.y1 = Math.max(0, Math.min(s.y1 + imgDy, cropState.y2 - minSize));
+        break;
+      case 'tr':
+        cropState.x2 = Math.min(cropState.imgW, Math.max(s.x2 + imgDx, cropState.x1 + minSize));
+        cropState.y1 = Math.max(0, Math.min(s.y1 + imgDy, cropState.y2 - minSize));
+        break;
+      case 'bl':
+        cropState.x1 = Math.max(0, Math.min(s.x1 + imgDx, cropState.x2 - minSize));
+        cropState.y2 = Math.min(cropState.imgH, Math.max(s.y2 + imgDy, cropState.y1 + minSize));
+        break;
+      case 'br':
+        cropState.x2 = Math.min(cropState.imgW, Math.max(s.x2 + imgDx, cropState.x1 + minSize));
+        cropState.y2 = Math.min(cropState.imgH, Math.max(s.y2 + imgDy, cropState.y1 + minSize));
+        break;
+    }
+    updateCropUI();
+  }
+
+  function onEnd() {
+    cropState.activeHandle = null;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    handles.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('touchstart', onStart, { passive: false });
+      el.addEventListener('mousedown', onStart);
+    });
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchend', onEnd);
+    document.addEventListener('mouseup', onEnd);
+  });
+})();
+
+// ==========================================
 // INIT
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
   loadCustomers();
 });
 
-// Handle back button on Android
+// Handle back button on Android — stay in mobile scan flow
 window.addEventListener('popstate', () => {
-  // intentional: do nothing, let our own nav handle it
+  const activeScreen = document.querySelector('.screen.active');
+  if (!activeScreen) return;
+  const id = activeScreen.id;
+  if (id === 'screen-review')  { goTo('edit'); }
+  else if (id === 'screen-edit')    { goTo('camera'); }
+  else if (id === 'screen-camera')  { stopCamera(); goTo('doctype'); }
+  else if (id === 'screen-doctype') { goTo('pick'); }
+  // If already on pick screen, do nothing (stay on /scan.html)
 });
+
+// Push history state on screen navigation to enable back button
+const _originalGoTo = goTo;
+goTo = function(screenName) {
+  _originalGoTo(screenName);
+  if (history.state !== screenName) {
+    history.pushState(screenName, '', '/scan');
+  }
+};
 </script>
 </body>
 </html>
