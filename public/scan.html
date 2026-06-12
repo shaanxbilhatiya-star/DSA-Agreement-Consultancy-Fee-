@@ -1138,6 +1138,28 @@ html, body {
 .crop-btn.auto { background: rgba(167,139,250,.2); color: #a78bfa; border: 1.5px solid #a78bfa; }
 .crop-btn.auto:active { background: rgba(167,139,250,.35); }
 
+/* Add More Pages button */
+.add-more-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 2px dashed var(--purple);
+  background: var(--purple-light);
+  color: var(--purple);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background .15s;
+}
+.add-more-btn:active { background: #ede9fe; }
+.add-more-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
+
 /* Review page remove button overlay */
 .review-page-wrap {
   position: relative;
@@ -1476,6 +1498,13 @@ html, body {
     <div>
       <div class="review-pages-label" id="review-pages-label" style="margin-bottom:10px">Pages (0)</div>
       <div class="review-pages-grid" id="review-pages-grid"></div>
+      <button class="add-more-btn" onclick="addMorePages()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Add More Pages
+      </button>
     </div>
 
     <div id="review-pdf-info" style="display:none">
@@ -2313,6 +2342,11 @@ function removeReviewPage(idx) {
   state.pdfBlob = null;
   proceedToReview();
   showToast('Page removed', 'success');
+}
+
+function addMorePages() {
+  state.pdfBlob = null;
+  startCamera();
 }
 
 // ==========================================
