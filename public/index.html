@@ -330,8 +330,8 @@ textarea { resize: vertical; min-height: 70px; }
         <div class="section-title">🧾 Receipt Details</div>
 
         <div class="form-group">
-          <label>Receipt No. (रसीद नं.)</label>
-          <input type="text" id="f-receiptNo" placeholder="e.g. RL-2025-001">
+          <label>Receipt No. (रसीद नं.) — Auto-generated</label>
+          <input type="text" id="f-receiptNo" placeholder="Auto-generated" readonly style="background:#f3f4f6;cursor:not-allowed">
         </div>
         <div class="form-group">
           <label>Payment Mode (भुगतान का माध्यम)</label>
@@ -548,6 +548,15 @@ function openAddModal() {
   clearForm();
   // Auto-set today
   document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  // Reset receipt field to readonly for auto-generation
+  var receiptEl = document.getElementById('f-receiptNo');
+  receiptEl.setAttribute('readonly', '');
+  receiptEl.style.background = '#f3f4f6';
+  receiptEl.style.cursor = 'not-allowed';
+  // Auto-generate receipt number
+  fetch('/api/next-receipt-number').then(r => r.json()).then(data => {
+    receiptEl.value = data.receiptNo;
+  }).catch(() => {});
   document.getElementById('modal').classList.add('open');
 }
 
@@ -561,7 +570,11 @@ async function openEditModal(id) {
   document.getElementById('f-date').value = c.date || '';
   document.getElementById('f-place').value = c.place || '';
   document.getElementById('f-address').value = c.address || '';
-  document.getElementById('f-receiptNo').value = c.receiptNo || '';
+  var receiptEl = document.getElementById('f-receiptNo');
+  receiptEl.value = c.receiptNo || '';
+  receiptEl.removeAttribute('readonly');
+  receiptEl.style.background = '#fff';
+  receiptEl.style.cursor = '';
   document.getElementById('f-payMode').value = c.payMode || '';
   document.getElementById('f-utr').value = c.utr || '';
   document.getElementById('f-loanAmt').value = c.loanAmt || '';

@@ -36,6 +36,21 @@ app.get('/api/customers', (req, res) => {
   res.json(customers);
 });
 
+app.get('/api/next-receipt-number', (req, res) => {
+  const state = loadState();
+  const year = new Date().getFullYear();
+  const prefix = 'RL-' + year + '-';
+  let maxNum = 0;
+  state.customers.forEach(c => {
+    if (c.receiptNo && c.receiptNo.startsWith(prefix)) {
+      const num = parseInt(c.receiptNo.replace(prefix, ''), 10);
+      if (!isNaN(num) && num > maxNum) maxNum = num;
+    }
+  });
+  const next = prefix + String(maxNum + 1).padStart(3, '0');
+  res.json({ receiptNo: next });
+});
+
 app.get('/api/customers/:id', (req, res) => {
   const state = loadState();
   const c = state.customers.find(c => c.id === req.params.id);
