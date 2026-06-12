@@ -1,0 +1,35 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Add delete button in customer list rows, verify receipt matches slip content, and add PDF upload feature for signed agreement documents with visual highlighting.",
+  "status": "completed",
+  "steps": [
+    "Step 1: Verify receipt.html matches the user's provided consultation fee slip content (same structure, Hindi/English text, fee of 500, 5 purpose points, signature blocks).",
+    "Step 2: Add a Delete button in both dashboard and customers table rows (rowHtml function) so users can delete directly from the list without opening detail view.",
+    "Step 3: Add PDF upload feature - manual multipart form parser in server.js (no multer needed due to npm registry restrictions), upload endpoint POST /api/customers/:id/upload-agreement, delete endpoint DELETE /api/customers/:id/agreement, and /uploads static file serving.",
+    "Step 4: Add upload UI in customer detail view - drag-and-drop area, file picker, view/remove buttons for existing uploads.",
+    "Step 5: Add green PDF badge indicator next to customer name in list rows when a signed agreement PDF has been uploaded.",
+    "Step 6: Auto-delete associated PDF files when a customer is deleted."
+  ],
+  "acceptance_criteria": [
+    "receipt.html content matches the user's slip exactly (same owner, title, fee details, 5 purpose points, signature blocks)",
+    "Delete button appears in each row of both the dashboard table and customers table",
+    "Delete from list shows confirmation prompt and removes the customer",
+    "PDF upload UI appears in customer detail view with drag-and-drop support",
+    "Only PDF files are accepted (validated both client and server side)",
+    "Uploaded PDFs are stored in /uploads directory with naming convention agreement-{customerId}.pdf",
+    "Customer object in state.json gets agreementPdf field when PDF is uploaded",
+    "Green PDF badge shows next to customer name in list rows when agreement is uploaded",
+    "Uploaded PDF can be viewed in new tab and removed via UI",
+    "Deleting a customer also deletes their associated PDF file",
+    "No external dependencies added (manual multipart parser used)"
+  ],
+  "verification": [
+    "node --check server.js passes (no syntax errors)",
+    "JavaScript in index.html is syntactically valid",
+    "All receipt content items verified programmatically",
+    "All feature checks pass (deleteCustomerFromList, badge-pdf, setupUploadUI, etc.)"
+  ],
+  "blocked_reason": null,
+  "findings": "npm registry is blocked (403 Forbidden) so multer could not be installed. Implemented a manual multipart/form-data parser in server.js that handles single PDF file uploads without any external dependency. The parser reads the raw request body, parses multipart boundaries, and extracts the file data."
+}
