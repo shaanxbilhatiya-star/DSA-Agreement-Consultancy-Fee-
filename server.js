@@ -72,6 +72,11 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(UPLOADS_DIR));
 
+// Clean URL alias: /scan → /scan.html
+app.get('/scan', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'scan.html'));
+});
+
 function loadState() {
   if (!fs.existsSync(STATE_FILE)) {
     fs.writeFileSync(STATE_FILE, JSON.stringify({ customers: [] }, null, 2));
