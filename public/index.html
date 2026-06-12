@@ -145,16 +145,11 @@ textarea { resize: vertical; min-height: 70px; }
 /* ===== PRINT AREA ===== */
 @media screen { .print-only { display: none !important; } }
 @media print {
-  body * { visibility: hidden; }
-  .print-area, .print-area * { visibility: visible; }
-  .print-area {
-    position: absolute; left: 0; top: 0; width: 100%;
-    background: #fff; z-index: 9999;
-    padding: 18mm 18mm 18mm 18mm;
-    box-sizing: border-box;
-  }
+  body > *:not(.print-area) { display: none !important; }
+  .print-area { display: none; }
+  .print-area.print-active { display: block !important; background: #fff; }
   .no-print { display: none !important; }
-  @page { margin: 0; size: A4; }
+  @page { size: A4; margin: 14mm 18mm; }
 }
 
 /* ===== PRINT DOCUMENT STYLES ===== */
@@ -986,6 +981,7 @@ function printReceipt(c) {
 
   hidePrintAreas();
   document.getElementById('print-receipt').style.display = 'block';
+  document.getElementById('print-receipt').classList.add('print-active');
   window.print();
 }
 
@@ -1024,12 +1020,15 @@ function printAgreement(c) {
 
   hidePrintAreas();
   document.getElementById('print-agreement').style.display = 'block';
+  document.getElementById('print-agreement').classList.add('print-active');
   window.print();
 }
 
 function hidePrintAreas() {
-  document.getElementById('print-receipt').style.display = 'none';
-  document.getElementById('print-agreement').style.display = 'none';
+  const r = document.getElementById('print-receipt');
+  const a = document.getElementById('print-agreement');
+  r.style.display = 'none'; r.classList.remove('print-active');
+  a.style.display = 'none'; a.classList.remove('print-active');
 }
 
 window.addEventListener('afterprint', hidePrintAreas);
