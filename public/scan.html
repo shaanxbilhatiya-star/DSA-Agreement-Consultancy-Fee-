@@ -690,13 +690,14 @@ html, body {
 
 /* ===== SCREEN 5: REVIEW & UPLOAD ===== */
 #screen-review {
-  background: var(--gray-50);
+  background: #f4f3ff;
 }
 .review-header {
-  background: var(--navy);
-  padding: 14px 20px 16px;
+  background: linear-gradient(135deg, #3b0764 0%, #4c1d95 60%, #5b21b6 100%);
+  padding: 14px 20px 20px;
   padding-top: max(14px, env(safe-area-inset-top));
   flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(76,29,149,.4);
 }
 .review-header .back-row {
   display: flex;
@@ -704,8 +705,8 @@ html, body {
   gap: 10px;
   margin-bottom: 2px;
 }
-.review-header h1 { font-size: 17px; font-weight: 700; color: #fff; }
-.review-header .sub { font-size: 13px; color: rgba(255,255,255,.55); margin-top: 2px; }
+.review-header h1 { font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -.01em; }
+.review-header .sub { font-size: 12px; color: rgba(255,255,255,.6); margin-top: 2px; }
 
 .review-body {
   flex: 1;
@@ -716,20 +717,22 @@ html, body {
   flex-direction: column;
   gap: 14px;
 }
+
+/* Customer card */
 .review-info-card {
   background: #fff;
-  border-radius: var(--radius);
+  border-radius: 18px;
   padding: 16px 18px;
-  border: 1.5px solid var(--gray-200);
-  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  border: none;
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
 }
 .review-info-card .ric-title {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--gray-500);
+  font-size: 10px;
+  font-weight: 800;
+  color: #a78bfa;
   text-transform: uppercase;
-  letter-spacing: .05em;
-  margin-bottom: 8px;
+  letter-spacing: .1em;
+  margin-bottom: 10px;
 }
 .review-info-card .ric-row {
   display: flex;
@@ -737,43 +740,75 @@ html, body {
   gap: 12px;
 }
 .ric-avatar {
-  width: 42px; height: 42px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--purple), var(--navy-light));
+  width: 46px; height: 46px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #7c3aed, #4c1d95);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
   color: #fff;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(124,58,237,.35);
 }
-.ric-name { font-size: 16px; font-weight: 600; color: var(--gray-800); }
-.ric-meta { font-size: 13px; color: var(--gray-500); margin-top: 1px; }
+.ric-name { font-size: 16px; font-weight: 700; color: #1e1b4b; }
+.ric-meta { font-size: 12px; color: #6b7280; margin-top: 2px; font-weight: 500; }
 
+/* Doc type card */
 .review-doc-type-card {
   background: #fff;
-  border-radius: var(--radius);
+  border-radius: 18px;
   padding: 16px 18px;
-  border: 1.5px solid var(--gray-200);
-  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  border: none;
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 .review-doc-icon {
-  width: 44px; height: 44px;
-  border-radius: 12px;
+  width: 48px; height: 48px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.review-doc-icon.purple { background: var(--purple-light); color: var(--purple); }
-.review-doc-icon.green  { background: var(--green-light); color: var(--green); }
-.review-doc-icon svg { width: 22px; height: 22px; }
-.review-doc-label { font-size: 15px; font-weight: 600; color: var(--gray-800); }
-.review-doc-sub   { font-size: 13px; color: var(--gray-500); margin-top: 2px; }
+.review-doc-icon.purple { background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: #7c3aed; box-shadow: 0 4px 10px rgba(124,58,237,.2); }
+.review-doc-icon.green  { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #16a34a; box-shadow: 0 4px 10px rgba(22,163,74,.2); }
+.review-doc-icon svg { width: 24px; height: 24px; }
+.review-doc-label { font-size: 15px; font-weight: 700; color: #1e1b4b; }
+.review-doc-sub   { font-size: 12px; color: #6b7280; margin-top: 3px; font-weight: 500; }
+
+/* Pages section */
+.review-pages-section {
+  background: #fff;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+}
+.review-pages-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.review-pages-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e1b4b;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.review-pages-count-badge {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: .02em;
+}
 
 /* Pages grid */
 .review-pages-label {
@@ -797,20 +832,97 @@ html, body {
 }
 .review-page-thumb:active { border-color: var(--purple); }
 
+/* Page tile wrapper */
+.review-page-wrap {
+  position: relative;
+  cursor: pointer;
+}
+.review-page-wrap img {
+  width: 100%;
+  aspect-ratio: 0.75;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  display: block;
+  transition: border-color .15s, transform .15s;
+}
+.review-page-wrap:active img { border-color: #7c3aed; transform: scale(.97); }
+
+/* Page number badge */
+.review-page-num {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  background: rgba(0,0,0,.65);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 8px;
+  letter-spacing: .02em;
+}
+
+/* Review page remove button */
+.review-page-remove {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(220,38,38,.9);
+  border: 2px solid #fff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 2px 8px rgba(220,38,38,.4);
+}
+.review-page-remove:active { background: #991b1b; transform: scale(.85); }
+.review-page-remove svg { width: 13px; height: 13px; }
+
+/* Add more pages tile in grid */
+.review-page-add-tile {
+  width: 100%;
+  aspect-ratio: 0.75;
+  border-radius: 12px;
+  border: 2.5px dashed #a78bfa;
+  background: linear-gradient(135deg, #faf5ff, #ede9fe);
+  color: #7c3aed;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  transition: background .15s;
+}
+.review-page-add-tile:active { background: #ede9fe; transform: scale(.97); }
+.review-page-add-tile svg { width: 26px; height: 26px; opacity: .8; }
+
 /* PDF size info */
 .pdf-size-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background: var(--green-light);
-  color: var(--green);
-  padding: 6px 14px;
+  gap: 7px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  color: #15803d;
+  padding: 8px 16px;
   border-radius: 20px;
   font-size: 13px;
-  font-weight: 600;
-  border: 1px solid #86efac;
+  font-weight: 700;
+  border: 1.5px solid #86efac;
+  box-shadow: 0 2px 8px rgba(21,128,61,.15);
 }
-.pdf-size-badge svg { width: 15px; height: 15px; }
+.pdf-size-badge svg { width: 16px; height: 16px; }
 
 /* Upload button */
 .upload-btn-wrap {
@@ -818,13 +930,13 @@ html, body {
 }
 .upload-big-btn {
   width: 100%;
-  background: var(--purple);
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
   color: #fff;
   border: none;
-  border-radius: var(--radius);
-  padding: 18px 24px;
-  font-size: 16px;
-  font-weight: 700;
+  border-radius: 18px;
+  padding: 20px 24px;
+  font-size: 17px;
+  font-weight: 800;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -832,13 +944,14 @@ html, body {
   gap: 10px;
   -webkit-tap-highlight-color: transparent;
   transition: all .15s;
-  box-shadow: 0 4px 16px rgba(109,40,217,.35);
+  box-shadow: 0 6px 24px rgba(109,40,217,.45);
+  letter-spacing: .01em;
 }
 .upload-big-btn svg { width: 22px; height: 22px; }
-.upload-big-btn:active { transform: scale(.97); background: var(--purple-dark); }
+.upload-big-btn:active { transform: scale(.97); box-shadow: 0 2px 10px rgba(109,40,217,.3); }
 .upload-big-btn:disabled {
-  background: var(--gray-300);
-  color: var(--gray-500);
+  background: #e5e7eb;
+  color: #9ca3af;
   cursor: not-allowed;
   box-shadow: none;
 }
@@ -1470,7 +1583,10 @@ html, body {
       </div>
     </div>
   </div>
+
   <div class="review-body">
+
+    <!-- Customer -->
     <div class="review-info-card">
       <div class="ric-title">Customer</div>
       <div class="ric-row">
@@ -1482,6 +1598,7 @@ html, body {
       </div>
     </div>
 
+    <!-- Doc type -->
     <div class="review-doc-type-card" id="review-doctype-card">
       <div class="review-doc-icon purple" id="review-doc-icon">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1494,11 +1611,16 @@ html, body {
       </div>
     </div>
 
-    <div>
-      <div class="review-pages-label" id="review-pages-label" style="margin-bottom:10px">Pages (0)</div>
+    <!-- Pages -->
+    <div class="review-pages-section">
+      <div class="review-pages-header">
+        <span class="review-pages-title">Pages</span>
+        <span class="review-pages-count-badge" id="review-pages-label">0 pages</span>
+      </div>
       <div class="review-pages-grid" id="review-pages-grid"></div>
     </div>
 
+    <!-- PDF ready -->
     <div id="review-pdf-info" style="display:none">
       <span class="pdf-size-badge" id="review-pdf-size">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1508,14 +1630,16 @@ html, body {
       </span>
     </div>
 
+    <!-- Upload -->
     <div class="upload-btn-wrap">
-      <button class="upload-big-btn" id="upload-btn" onclick="doUpload()">
+      <button class="upload-big-btn" id="upload-btn" onclick="doUpload()" disabled>
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
         </svg>
         Upload PDF to CRM
       </button>
     </div>
+
   </div>
 </div>
 
@@ -2201,10 +2325,12 @@ async function proceedToReview() {
   }
 
   const grid = document.getElementById('review-pages-grid');
-  document.getElementById('review-pages-label').textContent = `Pages (${state.capturedPages.length})`;
+  const n = state.capturedPages.length;
+  document.getElementById('review-pages-label').textContent = n + (n === 1 ? ' page' : ' pages');
   grid.innerHTML = state.capturedPages.map((p, i) =>
     `<div class="review-page-wrap" onclick="openPageViewer(${i})">
-      <img class="review-page-thumb" src="${p.editedDataUrl || p.originalDataUrl}">
+      <img src="${p.editedDataUrl || p.originalDataUrl}">
+      <div class="review-page-num">P${i + 1}</div>
       <div class="review-page-remove" onclick="event.stopPropagation();removeReviewPage(${i})" title="Remove page">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
