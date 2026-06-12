@@ -1,15 +1,12 @@
-const CACHE_NAME = 'ruralift-scan-v1';
-const ASSETS = [
-  '/scan',
-  '/scan.html',
-  '/logo.jpg',
-  '/manifest.json',
+// v2 — network-first for all HTML, cache-only for CDN libs
+const CACHE_NAME = 'ruralift-scan-v2';
+const CDN_ASSETS = [
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(CDN_ASSETS))
   );
   self.skipWaiting();
 });
@@ -24,15 +21,35 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Network-first for API calls
-  if (event.request.url.includes('/api/')) {
+  const url = event.request.url;
+
+  // Always hit network for HTML pages — never serve stale HTML
+  if (
+    url.includes('/scan') ||
+    url.endsWith('/') ||
+    url.endsWith('.html') ||
+    url.includes('/api/')
+  ) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request, { cache: 'no-store' }).catch(() =>
+        caches.match(event.request)
+      )
     );
     return;
   }
-  // Cache-first for static assets
+
+  // Cache-first only for CDN JS (doesn't change)
+  if (url.includes('cdnjs.cloudflare.com')) {
+    event.respondWith(
+      caches.match(event.request).then(cached => cached || fetch(event.request))
+    );
+    return;
+  }
+
+  // Everything else: network-first
   event.respondWith(
-    caches.match(event.request).then(cached => cached || fetch(event.request))
+    fetch(event.request, { cache: 'no-store' }).catch(() =>
+      caches.match(event.request)
+    )
   );
 });

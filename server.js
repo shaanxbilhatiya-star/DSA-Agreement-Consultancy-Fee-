@@ -69,6 +69,19 @@ function parseMultipart(req) {
 }
 
 app.use(express.json());
+
+// Never cache HTML pages — always send fresh from server
+app.use((req, res, next) => {
+  const p = req.path;
+  if (p === '/' || p === '/scan' || p.endsWith('.html')) {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(UPLOADS_DIR));
 
