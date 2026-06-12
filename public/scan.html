@@ -1164,14 +1164,14 @@ html, body {
 .review-page-wrap {
   position: relative;
 }
-.review-page-remove {
+.review-page-view-btn {
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: rgba(220,38,38,.85);
+  background: rgba(109,40,217,.85);
   border: 2px solid #fff;
   color: #fff;
   display: flex;
@@ -1182,8 +1182,8 @@ html, body {
   -webkit-tap-highlight-color: transparent;
   box-shadow: 0 2px 6px rgba(0,0,0,.3);
 }
-.review-page-remove:active { background: #991b1b; transform: scale(.9); }
-.review-page-remove svg { width: 14px; height: 14px; }
+.review-page-view-btn:active { background: #5b21b6; transform: scale(.9); }
+.review-page-view-btn svg { width: 14px; height: 14px; }
 
 /* PWA Install Banner */
 #pwa-install-banner {
@@ -1341,7 +1341,6 @@ html, body {
       <button class="cam-shutter" id="cam-shutter-btn" onclick="captureFrame()" aria-label="Take photo">
         <div class="cam-shutter-inner"></div>
       </button>
-      <button id="cam-burst-btn" onclick="toggleBurstMode()" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:10px;font-weight:600;padding:4px 10px;border-radius:16px;cursor:pointer;margin-top:2px" title="Auto-capture every 2s">⚡ Multi</button>
     </div>
     <button class="cam-done-btn" id="cam-done-btn" onclick="proceedToEdit()" disabled>
       <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1524,6 +1523,28 @@ html, body {
         Upload PDF to CRM
       </button>
     </div>
+  </div>
+</div>
+
+<!-- ========== PAGE VIEWER LIGHTBOX ========== -->
+<div id="page-viewer-overlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.93);flex-direction:column;align-items:center;justify-content:center;">
+  <div style="position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:rgba(0,0,0,.5);">
+    <span id="viewer-page-label" style="color:#fff;font-size:14px;font-weight:600;">Page 1 of 6</span>
+    <button onclick="closePageViewer()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+  </div>
+  <img id="viewer-img" src="" style="max-width:100%;max-height:calc(100vh - 140px);object-fit:contain;border-radius:8px;margin-top:60px;">
+  <div style="position:absolute;bottom:0;left:0;right:0;padding:16px;display:flex;gap:12px;background:rgba(0,0,0,.5);">
+    <button onclick="viewerPrev()" id="viewer-prev-btn" style="flex:1;padding:12px;border-radius:12px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:15px;font-weight:600;cursor:pointer;">‹ Prev</button>
+    <button onclick="deleteViewedPage()" style="flex:1;padding:12px;border-radius:12px;border:none;background:#dc2626;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">🗑 Delete</button>
+    <button onclick="viewerNext()" id="viewer-next-btn" style="flex:1;padding:12px;border-radius:12px;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:15px;font-weight:600;cursor:pointer;">Next ›</button>
+  </div>
+</div>
+
+<!-- ========== CAMERA CAPTURE PREVIEW ========== -->
+<div id="capture-preview-overlay" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.7);align-items:center;justify-content:center;">
+  <div style="position:relative;max-width:85vw;max-height:75vh;">
+    <img id="capture-preview-img" src="" style="max-width:100%;max-height:75vh;object-fit:contain;border-radius:12px;border:3px solid #a78bfa;box-shadow:0 0 30px rgba(167,139,250,.4);">
+    <div style="position:absolute;bottom:-36px;left:0;right:0;text-align:center;color:#a78bfa;font-size:13px;font-weight:600;">✓ Captured — continuing in a moment…</div>
   </div>
 </div>
 
@@ -1822,7 +1843,6 @@ async function startCamera() {
 }
 
 function stopCamera() {
-  stopBurstMode();
   if (state.cameraStream) {
     state.cameraStream.getTracks().forEach(t => t.stop());
     state.cameraStream = null;
@@ -1867,43 +1887,60 @@ function captureFrame() {
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
   const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
 
+  showCapturePreview(dataUrl);
   addCapturedPage(dataUrl);
 }
 
-// ===== BURST MODE (Multi-shot auto-capture) =====
-let burstInterval = null;
-let burstActive = false;
+// ===== PAGE VIEWER LIGHTBOX =====
+let viewerIndex = 0;
 
-function toggleBurstMode() {
-  burstActive = !burstActive;
-  const btn = document.getElementById('cam-burst-btn');
-  if (burstActive) {
-    btn.style.background = 'var(--purple)';
-    btn.textContent = '⚡ Stop';
-    showToast('Multi-shot ON — auto-capturing every 2s', 'success');
-    burstInterval = setInterval(() => {
-      if (state.cameraReady) captureFrame();
-    }, 2000);
-  } else {
-    btn.style.background = 'rgba(255,255,255,.15)';
-    btn.textContent = '⚡ Multi';
-    clearInterval(burstInterval);
-    burstInterval = null;
-    showToast('Multi-shot OFF', '');
-  }
+function openPageViewer(idx) {
+  viewerIndex = idx;
+  renderViewerPage();
+  const overlay = document.getElementById('page-viewer-overlay');
+  overlay.style.display = 'flex';
 }
 
-function stopBurstMode() {
-  if (burstActive) {
-    burstActive = false;
-    clearInterval(burstInterval);
-    burstInterval = null;
-    const btn = document.getElementById('cam-burst-btn');
-    if (btn) {
-      btn.style.background = 'rgba(255,255,255,.15)';
-      btn.textContent = '⚡ Multi';
-    }
+function renderViewerPage() {
+  const p = state.capturedPages[viewerIndex];
+  if (!p) return;
+  document.getElementById('viewer-img').src = p.editedDataUrl || p.originalDataUrl;
+  document.getElementById('viewer-page-label').textContent = `Page ${viewerIndex + 1} of ${state.capturedPages.length}`;
+  document.getElementById('viewer-prev-btn').style.opacity = viewerIndex === 0 ? '0.3' : '1';
+  document.getElementById('viewer-next-btn').style.opacity = viewerIndex === state.capturedPages.length - 1 ? '0.3' : '1';
+}
+
+function viewerPrev() {
+  if (viewerIndex > 0) { viewerIndex--; renderViewerPage(); }
+}
+
+function viewerNext() {
+  if (viewerIndex < state.capturedPages.length - 1) { viewerIndex++; renderViewerPage(); }
+}
+
+function closePageViewer() {
+  document.getElementById('page-viewer-overlay').style.display = 'none';
+}
+
+function deleteViewedPage() {
+  if (state.capturedPages.length <= 1) {
+    showToast('At least one page required', 'error');
+    return;
   }
+  state.capturedPages.splice(viewerIndex, 1);
+  state.pdfBlob = null;
+  if (viewerIndex >= state.capturedPages.length) viewerIndex = state.capturedPages.length - 1;
+  closePageViewer();
+  proceedToReview();
+  showToast('Page deleted', 'success');
+}
+
+// ===== CAMERA CAPTURE LIVE PREVIEW =====
+function showCapturePreview(dataUrl) {
+  const overlay = document.getElementById('capture-preview-overlay');
+  document.getElementById('capture-preview-img').src = dataUrl;
+  overlay.style.display = 'flex';
+  setTimeout(() => { overlay.style.display = 'none'; }, 1200);
 }
 
 function handleFallbackFiles(files) {
@@ -2173,11 +2210,12 @@ async function proceedToReview() {
   const grid = document.getElementById('review-pages-grid');
   document.getElementById('review-pages-label').textContent = `Pages (${state.capturedPages.length})`;
   grid.innerHTML = state.capturedPages.map((p, i) =>
-    `<div class="review-page-wrap">
+    `<div class="review-page-wrap" onclick="openPageViewer(${i})">
       <img class="review-page-thumb" src="${p.editedDataUrl || p.originalDataUrl}">
-      <div class="review-page-remove" onclick="removeReviewPage(${i})" title="Remove page">
+      <div class="review-page-view-btn" title="View page">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
         </svg>
       </div>
     </div>`
