@@ -1209,7 +1209,6 @@ html, body {
 <div class="screen active" id="screen-pick">
   <div class="pick-header">
     <div class="logo-text">Ruralift <span>Scan</span></div>
-    <a href="/" id="scan-home-link">← Scan Home</a>
   </div>
   <div class="pick-search-wrap">
     <div class="pick-search-inner">
@@ -1527,8 +1526,7 @@ html, body {
     <div class="success-title">Uploaded!</div>
     <div class="success-sub" id="success-sub">Document saved successfully.</div>
     <div class="success-actions">
-      <button class="btn-success-primary" onclick="scanAnother()">Scan Another Document</button>
-      <button class="btn-success-secondary" onclick="goHomeFromSuccess()">← Back to Scan Home</button>
+      <button class="btn-success-primary" onclick="scanNewDocument()">📷 Scan New Document</button>
     </div>
   </div>
 </div>
@@ -1640,16 +1638,6 @@ function goTo(screenName) {
   if (history.state !== screenName) {
     history.pushState(screenName, '', '/scan');
   }
-}
-
-// FIX #1: Home button - go back to /scan (scan home screen)
-function goHomeFromSuccess() {
-  hideSuccess();
-  state.capturedPages = [];
-  state.pdfBlob = null;
-  state.docType = null;
-  state.selectedCustomer = null;
-  goTo('pick');
 }
 
 // FIX #4: Proper back to camera with re-init
@@ -2292,6 +2280,12 @@ function scanAnother() {
     setDtStatus('receipt',   !!c.receiptPdf);
   }
   goTo('doctype');
+}
+
+// Redirect to /scan page (full reload to fresh state)
+function scanNewDocument() {
+  hideSuccess();
+  window.location.href = '/scan';
 }
 
 let toastTimer;
