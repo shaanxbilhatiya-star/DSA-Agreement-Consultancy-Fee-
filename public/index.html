@@ -318,6 +318,24 @@ textarea { resize: vertical; min-height: 70px; }
           <div id="upload-status" class="upload-status" style="display:none"></div>
         </div>
       </div>
+
+      <!-- UPLOAD RECEIPT PDF -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-header"><h2>Signed Receipt (&#8377;500 Consultation Fee)</h2></div>
+        <div style="padding:20px">
+          <p style="font-size:13px;color:var(--gray-600);margin-bottom:14px">Upload the signed consultation fee receipt (PDF only, max 10MB).</p>
+          <div id="receipt-upload-area" class="upload-area">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:36px;height:36px;color:var(--gray-400);margin-bottom:8px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            <p style="font-size:14px;color:var(--gray-600);margin-bottom:8px">Click to select or drag a PDF file here</p>
+            <input type="file" id="receipt-file-input" accept=".pdf,application/pdf">
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('receipt-file-input').click()">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+              Choose PDF
+            </button>
+          </div>
+          <div id="receipt-upload-status" class="upload-status" style="display:none"></div>
+        </div>
+      </div>
     </div>
 
   </div><!-- /content -->
@@ -523,9 +541,10 @@ async function loadCustomers(q = '') {
 
 function rowHtml(c, showLoan = false) {
   const loan = showLoan ? `<td>${c.loanAmt ? 'रु. ' + Number(c.loanAmt).toLocaleString('en-IN') : '—'}</td>` : '';
-  const pdfBadge = c.agreementPdf ? `<span class="badge-pdf"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Signed PDF Uploaded</span> ` : '';
+  const pdfBadge = c.agreementPdf ? `<span class="badge-pdf"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Agreement</span> ` : '';
+  const receiptBadge = c.receiptPdf ? `<span class="badge-pdf"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Receipt</span> ` : '';
   return `<tr>
-    <td>${pdfBadge}<strong>${c.name || '—'}</strong></td>
+    <td>${pdfBadge}${receiptBadge}<strong>${c.name || '—'}</strong></td>
     <td>${c.mobile || '—'}</td>
     <td>${c.aadhaar || '—'}</td>
     ${loan}
@@ -739,6 +758,9 @@ function setupUploadUI(c) {
       toast('Please drop a PDF file only');
     }
   };
+
+  // Setup receipt upload UI
+  setupReceiptUploadUI(c);
 }
 
 async function uploadAgreementPdf(customerId, file) {
@@ -766,6 +788,83 @@ async function deleteAgreementPdf(customerId) {
   try {
     await fetch('/api/customers/' + customerId + '/agreement', { method: 'DELETE' });
     toast('Agreement PDF removed');
+    viewCustomer(customerId);
+  } catch (e) {
+    toast('Failed to remove PDF');
+  }
+}
+
+// ===== UPLOAD RECEIPT PDF =====
+
+function setupReceiptUploadUI(c) {
+  const fileInput = document.getElementById('receipt-file-input');
+  const uploadArea = document.getElementById('receipt-upload-area');
+  const uploadStatus = document.getElementById('receipt-upload-status');
+
+  // Show current status
+  if (c.receiptPdf) {
+    uploadArea.style.display = 'none';
+    uploadStatus.style.display = 'flex';
+    uploadStatus.innerHTML = `
+      <div class="file-info">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Signed receipt uploaded
+      </div>
+      <a class="btn btn-outline btn-sm" href="/uploads/${c.receiptPdf}" target="_blank">View PDF</a>
+      <button class="btn btn-danger btn-sm" onclick="deleteReceiptPdf('${c.id}')">Remove</button>
+    `;
+  } else {
+    uploadArea.style.display = 'block';
+    uploadStatus.style.display = 'none';
+  }
+
+  // File input change handler
+  fileInput.onchange = function() {
+    if (fileInput.files.length > 0) {
+      uploadReceiptPdf(c.id, fileInput.files[0]);
+    }
+  };
+
+  // Drag and drop
+  uploadArea.ondragover = function(e) { e.preventDefault(); uploadArea.style.borderColor = 'var(--purple)'; };
+  uploadArea.ondragleave = function(e) { e.preventDefault(); uploadArea.style.borderColor = ''; };
+  uploadArea.ondrop = function(e) {
+    e.preventDefault();
+    uploadArea.style.borderColor = '';
+    const files = e.dataTransfer.files;
+    if (files.length > 0 && files[0].type === 'application/pdf') {
+      uploadReceiptPdf(c.id, files[0]);
+    } else {
+      toast('Please drop a PDF file only');
+    }
+  };
+}
+
+async function uploadReceiptPdf(customerId, file) {
+  const formData = new FormData();
+  formData.append('receiptPdf', file);
+  try {
+    const res = await fetch('/api/customers/' + customerId + '/upload-receipt', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (res.ok) {
+      toast('Receipt PDF uploaded successfully');
+      viewCustomer(customerId);
+    } else {
+      toast(data.error || 'Upload failed');
+    }
+  } catch (e) {
+    toast('Upload failed: ' + e.message);
+  }
+}
+
+async function deleteReceiptPdf(customerId) {
+  if (!confirm('Remove the uploaded receipt PDF?')) return;
+  try {
+    await fetch('/api/customers/' + customerId + '/receipt', { method: 'DELETE' });
+    toast('Receipt PDF removed');
     viewCustomer(customerId);
   } catch (e) {
     toast('Failed to remove PDF');
