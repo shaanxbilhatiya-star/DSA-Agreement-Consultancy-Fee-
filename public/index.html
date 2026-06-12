@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ruralift CRM</title>
+<style>
+/* ===== BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --purple: #6d28d9;
+  --purple-light: #ede9fe;
+  --navy: #1e1b4b;
+  --navy-light: #312e81;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-400: #9ca3af;
+  --gray-600: #4b5563;
+  --gray-800: #1f2937;
+  --green: #16a34a;
+  --red: #dc2626;
+  --white: #ffffff;
+}
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
+
+/* ===== SIDEBAR ===== */
+#sidebar {
+  position: fixed; top: 0; left: 0; width: 220px; height: 100vh;
+  background: var(--navy); display: flex; flex-direction: column;
+  z-index: 100; box-shadow: 2px 0 8px rgba(0,0,0,.2);
+}
+#sidebar .logo-wrap { padding: 20px 16px 12px; border-bottom: 1px solid rgba(255,255,255,.1); }
+#sidebar .logo-wrap img { width: 100%; max-width: 160px; }
+#sidebar nav { flex: 1; padding: 12px 0; }
+#sidebar nav a {
+  display: flex; align-items: center; gap: 10px; padding: 11px 20px;
+  color: rgba(255,255,255,.7); text-decoration: none; font-size: 14px;
+  transition: all .15s; cursor: pointer; border-left: 3px solid transparent;
+}
+#sidebar nav a:hover { color: #fff; background: rgba(255,255,255,.06); }
+#sidebar nav a.active { color: #fff; background: rgba(109,40,217,.35); border-left-color: #a78bfa; }
+#sidebar nav a svg { width: 18px; height: 18px; flex-shrink: 0; }
+#sidebar .version { padding: 12px 20px; font-size: 11px; color: rgba(255,255,255,.3); }
+
+/* ===== MAIN CONTENT ===== */
+#main { margin-left: 220px; min-height: 100vh; }
+#topbar {
+  background: #fff; border-bottom: 1px solid var(--gray-200);
+  padding: 0 28px; height: 60px; display: flex; align-items: center;
+  justify-content: space-between; position: sticky; top: 0; z-index: 50;
+}
+#topbar h1 { font-size: 18px; font-weight: 700; color: var(--navy); }
+#topbar .search-wrap { position: relative; }
+#topbar input {
+  width: 280px; padding: 8px 12px 8px 36px; border: 1px solid var(--gray-200);
+  border-radius: 8px; font-size: 14px; background: var(--gray-50); outline: none;
+  transition: border .15s;
+}
+#topbar input:focus { border-color: var(--purple); background: #fff; }
+#topbar .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--gray-400); }
+#content { padding: 28px; }
+
+/* ===== VIEWS ===== */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ===== STATS ===== */
+.stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+.stat-card {
+  background: #fff; border-radius: 12px; padding: 20px 24px;
+  border: 1px solid var(--gray-200); display: flex; align-items: center; gap: 16px;
+}
+.stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.stat-icon.purple { background: var(--purple-light); color: var(--purple); }
+.stat-icon.green { background: #dcfce7; color: var(--green); }
+.stat-icon.navy { background: #e0e7ff; color: var(--navy-light); }
+.stat-icon svg { width: 22px; height: 22px; }
+.stat-label { font-size: 12px; color: var(--gray-600); margin-bottom: 2px; }
+.stat-val { font-size: 26px; font-weight: 700; color: var(--navy); }
+
+/* ===== TABLE ===== */
+.card { background: #fff; border-radius: 12px; border: 1px solid var(--gray-200); overflow: hidden; }
+.card-header { padding: 16px 20px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; }
+.card-header h2 { font-size: 15px; font-weight: 600; color: var(--navy); }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 11px 16px; font-size: 12px; font-weight: 600; color: var(--gray-600); background: var(--gray-50); text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid var(--gray-200); }
+td { padding: 13px 16px; font-size: 14px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--gray-50); }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.badge-purple { background: var(--purple-light); color: var(--purple); }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--gray-400); }
+.empty-state svg { width: 48px; height: 48px; margin-bottom: 12px; }
+
+/* ===== BUTTONS ===== */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all .15s; text-decoration: none; }
+.btn-primary { background: var(--purple); color: #fff; }
+.btn-primary:hover { background: #5b21b6; }
+.btn-outline { background: #fff; color: var(--gray-800); border: 1px solid var(--gray-200); }
+.btn-outline:hover { background: var(--gray-50); }
+.btn-danger { background: #fef2f2; color: var(--red); border: 1px solid #fecaca; }
+.btn-danger:hover { background: #fee2e2; }
+.btn-green { background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; }
+.btn-green:hover { background: #dcfce7; }
+.btn svg { width: 15px; height: 15px; }
+.btn-sm { padding: 5px 10px; font-size: 13px; }
+
+/* ===== FORM ===== */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid.col3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group.full { grid-column: 1 / -1; }
+label { font-size: 13px; font-weight: 500; color: var(--gray-600); }
+input, select, textarea {
+  padding: 9px 12px; border: 1px solid var(--gray-200); border-radius: 8px;
+  font-size: 14px; font-family: inherit; outline: none; transition: border .15s; background: #fff;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--purple); box-shadow: 0 0 0 3px rgba(109,40,217,.08); }
+textarea { resize: vertical; min-height: 70px; }
+.section-title { font-size: 13px; font-weight: 700; color: var(--purple); text-transform: uppercase; letter-spacing: .06em; margin: 20px 0 12px; grid-column: 1 / -1; padding-bottom: 6px; border-bottom: 2px solid var(--purple-light); }
+.form-actions { display: flex; gap: 10px; margin-top: 24px; }
+
+/* ===== DETAIL VIEW ===== */
+.detail-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.detail-header h2 { font-size: 22px; font-weight: 700; color: var(--navy); }
+.detail-header .sub { font-size: 13px; color: var(--gray-400); margin-top: 2px; }
+.detail-actions { display: flex; gap: 10px; margin-left: auto; }
+.info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.info-item { background: var(--gray-50); border-radius: 8px; padding: 12px 14px; border: 1px solid var(--gray-100); }
+.info-item .lbl { font-size: 11px; color: var(--gray-400); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+.info-item .val { font-size: 14px; color: var(--gray-800); font-weight: 500; }
+.print-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+
+/* ===== MODAL ===== */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 200; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 16px; width: 860px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+.modal-header { padding: 20px 24px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #fff; z-index: 10; }
+.modal-header h3 { font-size: 17px; font-weight: 700; color: var(--navy); }
+.modal-body { padding: 24px; }
+.close-btn { background: none; border: none; cursor: pointer; color: var(--gray-400); padding: 4px; border-radius: 6px; }
+.close-btn:hover { background: var(--gray-100); color: var(--gray-800); }
+
+/* ===== PRINT AREA ===== */
+@media screen { .print-only { display: none !important; } }
+@media print {
+  /* Give the browser proper margins so nothing bleeds off the edge */
+  @page { size: A4 portrait; margin: 14mm 16mm 16mm 16mm; }
+  /* Hide everything except the active print area */
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area {
+    position: fixed;
+    left: 0; top: 0;
+    width: 100%;
+    background: #fff;
+    /* No extra padding — @page margin handles it */
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  .no-print { display: none !important; }
+  /* Prevent page-break inside key blocks */
+  .print-area .doc-table    { page-break-inside: avoid; }
+  .print-area .sig-table    { page-break-inside: avoid; }
+  .print-area .purpose-box  { page-break-inside: avoid; }
+  .print-area .section-head { page-break-after: avoid !important; }
+  /* Hard page break for PDC receipt */
+  .print-area .page-break {
+    display: block !important;
+    page-break-before: always;
+    break-before: page;
+    height: 0; margin: 0; padding: 0;
+  }
+}
+
+/* ===== PRINT DOCUMENT STYLES ===== */
+.print-area {
+  font-family: 'Noto Serif', 'Times New Roman', serif;
+  font-size: 10.5pt;
+  color: #000;
+  line-height: 1.6;
+  background: #fff;
+  /* Screen-only preview padding (overridden to 0 on actual print via @page margin above) */
+  padding: 14mm 16mm 16mm 16mm;
+  box-sizing: border-box;
+}
+.print-area .doc-header {
+  text-align: center;
+  border-bottom: 3px double #000;
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+}
+.print-area .doc-logo {
+  width: 140px; height: auto;
+  display: block; margin: 0 auto 6px;
+}
+.print-area .doc-owner   { font-size: 10pt; font-weight: bold; margin: 2px 0; }
+.print-area .doc-title-hi { font-size: 15pt; font-weight: bold; margin: 4px 0; }
+.print-area .doc-title-en { font-size: 12pt; font-weight: bold; }
+.print-area .doc-subtitle { font-size: 9pt; font-style: italic; }
+
+/* All tables: fixed layout so columns respect widths and text wraps cleanly */
+.print-area .doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+  table-layout: fixed;
+  word-break: break-word;
+}
+.print-area .doc-table td,
+.print-area .doc-table th {
+  border: 1px solid #444;
+  padding: 5px 8px;
+  font-size: 10pt;
+  vertical-align: top;
+  word-break: break-word;
+  line-height: 1.5;
+}
+.print-area .doc-table th {
+  background: #eee;
+  font-weight: bold;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* Underline placeholders */
+.print-area .field-line      { display: inline-block; border-bottom: 1px solid #000; min-width: 150px; vertical-align: bottom; }
+.print-area .field-line-long { display: inline-block; border-bottom: 1px solid #000; min-width: 240px; vertical-align: bottom; }
+
+.print-area .section-head {
+  font-size: 11.5pt;
+  font-weight: bold;
+  margin: 12px 0 4px;
+  border-bottom: 1.5px solid #333;
+  padding-bottom: 2px;
+}
+.print-area .para { margin: 5px 0; line-height: 1.6; text-align: justify; font-size: 10pt; }
+
+/* Signature table — real 50/50 layout, no borders */
+.print-area .sig-table { width: 100%; border-collapse: collapse; margin-top: 20px; table-layout: fixed; }
+.print-area .sig-table td { width: 50%; padding: 6px 12px; vertical-align: top; font-size: 10pt; border: none; line-height: 1.8; }
+.print-area .sig-box { border-top: 1px solid #000; margin-top: 44px; padding-top: 4px; font-size: 10pt; }
+
+.print-area .purpose-box { border: 1px solid #666; padding: 7px 12px; margin: 8px 0; border-radius: 2px; }
+.print-area .purpose-box ol { margin-left: 18px; }
+.print-area .purpose-box li { margin: 4px 0; line-height: 1.55; font-size: 10pt; }
+.print-area .footer-note {
+  font-size: 9pt;
+  text-align: center;
+  font-style: italic;
+  border-top: 1px solid #aaa;
+  padding-top: 7px;
+  margin-top: 14px;
+}
+
+/* ===== ALERT ===== */
+.toast { position: fixed; bottom: 24px; right: 24px; background: var(--navy); color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 999; opacity: 0; transition: opacity .3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="logo-wrap">
+    <img src="logo.jpg" alt="Ruralift">
+  </div>
+  <nav>
+    <a onclick="showView('dashboard')" class="active" id="nav-dashboard">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Dashboard
+    </a>
+    <a onclick="showView('customers')" id="nav-customers">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+      Customers
+    </a>
+    <a onclick="openAddModal()" id="nav-add">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      New Customer
+    </a>
+  </nav>
+  <div class="version">Ruralift CRM v1.0</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <h1 id="page-title">Dashboard</h1>
+    <div class="search-wrap">
+      <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0"/></svg>
+      <input type="text" id="search-input" placeholder="Search by name, mobile, Aadhaar…" oninput="handleSearch(this.value)">
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- DASHBOARD VIEW -->
+    <div class="view active" id="view-dashboard">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon purple">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <div>
+            <div class="stat-label">Total Customers</div>
+            <div class="stat-val" id="stat-total">0</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <div class="stat-label">This Month</div>
+            <div class="stat-val" id="stat-month">0</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon navy">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+          </div>
+          <div>
+            <div class="stat-label">Today</div>
+            <div class="stat-val" id="stat-today">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Recent Customers</h2>
+          <button class="btn btn-primary btn-sm" onclick="openAddModal()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add New
+          </button>
+        </div>
+        <table>
+          <thead><tr><th>Name</th><th>Mobile</th><th>Aadhaar</th><th>Date</th><th>Receipt No.</th><th>Actions</th></tr></thead>
+          <tbody id="dashboard-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CUSTOMERS VIEW -->
+    <div class="view" id="view-customers">
+      <div class="card">
+        <div class="card-header">
+          <h2>All Customers <span id="customer-count" class="badge badge-purple" style="margin-left:8px">0</span></h2>
+          <button class="btn btn-primary btn-sm" onclick="openAddModal()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            New Customer
+          </button>
+        </div>
+        <table>
+          <thead><tr><th>Name</th><th>Mobile</th><th>Aadhaar</th><th>Loan Amount</th><th>Date</th><th>Receipt No.</th><th>Actions</th></tr></thead>
+          <tbody id="customers-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- DETAIL VIEW -->
+    <div class="view" id="view-detail">
+      <div class="detail-header">
+        <div>
+          <h2 id="detail-name">—</h2>
+          <div class="sub" id="detail-sub">—</div>
+        </div>
+        <div class="detail-actions">
+          <button class="btn btn-outline btn-sm" onclick="showView('customers')">← Back</button>
+          <button class="btn btn-outline btn-sm" id="detail-edit-btn">Edit</button>
+          <button class="btn btn-danger btn-sm" id="detail-delete-btn">Delete</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><h2>Client Information</h2></div>
+        <div style="padding:20px">
+          <div class="info-grid" id="detail-info-grid"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2>Print Documents</h2></div>
+        <div style="padding:20px">
+          <p style="font-size:13px;color:var(--gray-600);margin-bottom:14px">All fields are pre-filled. Physical signature & thumb impression sections are left blank for manual signing.</p>
+          <div class="print-buttons">
+            <button class="btn btn-primary" id="print-receipt-btn">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z"/></svg>
+              Print Consultation Fee Receipt
+            </button>
+            <button class="btn btn-green" id="print-agreement-btn">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              Print Loan Agreement + PDC Receipt
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">New Customer</h3>
+      <button class="close-btn" onclick="closeModal()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="section-title">📋 Basic Details</div>
+
+        <div class="form-group">
+          <label>Client Name (ग्राहक का नाम) *</label>
+          <input type="text" id="f-name" placeholder="Full Name">
+        </div>
+        <div class="form-group">
+          <label>Mobile (मोबाइल) *</label>
+          <input type="text" id="f-mobile" placeholder="10-digit mobile">
+        </div>
+        <div class="form-group">
+          <label>Aadhaar No. (आधार नं.) *</label>
+          <input type="text" id="f-aadhaar" placeholder="XXXX XXXX XXXX">
+        </div>
+        <div class="form-group">
+          <label>Date (दिनांक)</label>
+          <input type="date" id="f-date">
+        </div>
+        <div class="form-group">
+          <label>Place / Location (स्थान)</label>
+          <input type="text" id="f-place" placeholder="e.g. Mandla">
+        </div>
+        <div class="form-group full">
+          <label>Address (पता)</label>
+          <textarea id="f-address" placeholder="Full address"></textarea>
+        </div>
+
+        <div class="section-title">🧾 Receipt Details</div>
+
+        <div class="form-group">
+          <label>Receipt No. (रसीद नं.)</label>
+          <input type="text" id="f-receiptNo" placeholder="e.g. RL-2025-001">
+        </div>
+        <div class="form-group">
+          <label>Payment Mode (भुगतान का माध्यम)</label>
+          <select id="f-payMode">
+            <option value="">Select</option>
+            <option value="नकद (Cash)">नकद (Cash)</option>
+            <option value="UPI">UPI</option>
+            <option value="बैंक हस्तांतरण (Bank Transfer)">बैंक हस्तांतरण (Bank Transfer)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Payment Reference / UTR</label>
+          <input type="text" id="f-utr" placeholder="UTR / Transaction ID">
+        </div>
+
+        <div class="section-title">📄 Agreement Details</div>
+
+        <div class="form-group">
+          <label>Agreed Loan Amount — Figures (रु.)</label>
+          <input type="text" id="f-loanAmt" placeholder="e.g. 500000">
+        </div>
+        <div class="form-group">
+          <label>Loan Amount in Words</label>
+          <input type="text" id="f-loanAmtWords" placeholder="e.g. पाँच लाख मात्र">
+        </div>
+        <div class="form-group">
+          <label>Success Fee — Figures (रु.)</label>
+          <input type="text" id="f-successFee" placeholder="e.g. 15000">
+        </div>
+        <div class="form-group">
+          <label>Success Fee in Words</label>
+          <input type="text" id="f-successFeeWords" placeholder="e.g. पंद्रह हजार मात्र">
+        </div>
+
+        <div class="section-title">🏦 PDC Cheque Details</div>
+
+        <div class="form-group">
+          <label>Cheque No. (चेक नंबर)</label>
+          <input type="text" id="f-chequeNo" placeholder="e.g. 001234">
+        </div>
+        <div class="form-group">
+          <label>Bank Name & Branch</label>
+          <input type="text" id="f-chequeBankBranch" placeholder="e.g. SBI, Mandla Branch">
+        </div>
+        <div class="form-group">
+          <label>Account Holder Name</label>
+          <input type="text" id="f-chequeHolder" placeholder="Name on cheque">
+        </div>
+        <div class="form-group">
+          <label>Cheque Amount (रु.)</label>
+          <input type="text" id="f-chequeAmt" placeholder="e.g. 15000">
+        </div>
+        <div class="form-group">
+          <label>Cheque Date</label>
+          <input type="date" id="f-chequeDate">
+        </div>
+
+        <div class="section-title">📝 Notes</div>
+        <div class="form-group full">
+          <label>Internal Notes</label>
+          <textarea id="f-notes" placeholder="Any internal remarks…"></textarea>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="saveCustomer()">Save Customer</button>
+        <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRINT AREA: RECEIPT -->
+<div class="print-area" id="print-receipt" style="display:none">
+  <div class="doc-header">
+    <img src="logo.jpg" class="doc-logo" alt="Ruralift">
+    <div class="doc-owner">स्वामी: Shaan Singh Bilhatiya | Udyam: UDYAM-MP-29-0021193</div>
+    <div class="doc-title-hi">परामर्श शुल्क रसीद</div>
+    <div class="doc-title-en">Consultation Fee Receipt</div>
+    <div class="doc-subtitle">(प्रारंभिक परामर्श / प्रथम मुलाकात शुल्क — केवल समय एवं परामर्श हेतु)</div>
+  </div>
+
+  <p class="para"><strong>रसीद नं. (Receipt No.):</strong> <span id="pr-receiptNo" class="field-line"></span></p>
+  <p class="para">
+    <strong>दिनांक (Date):</strong> <span id="pr-date" class="field-line"></span>
+    &nbsp;&nbsp;&nbsp;
+    <strong>स्थान:</strong> <span id="pr-place" class="field-line"></span>
+  </p>
+
+  <div class="section-head">ग्राहक विवरण (Client Details)</div>
+  <p class="para"><strong>ग्राहक का नाम (Name):</strong> <span id="pr-name" class="field-line-long"></span></p>
+  <p class="para"><strong>मोबाइल (Mobile):</strong> <span id="pr-mobile" class="field-line"></span></p>
+  <p class="para"><strong>आधार नं. (Aadhaar No.):</strong> <span id="pr-aadhaar" class="field-line-long"></span></p>
+
+  <div class="section-head">शुल्क विवरण (Fee Details)</div>
+  <table class="doc-table">
+    <colgroup><col style="width:58%"><col style="width:42%"></colgroup>
+    <tr><th>विवरण</th><th>राशि</th></tr>
+    <tr><td>प्रारंभिक परामर्श / प्रथम मुलाकात शुल्क</td><td><strong>रु. 500/- (रुपये पाँच सौ मात्र)</strong></td></tr>
+    <tr><td>भुगतान का माध्यम (Mode)</td><td><span id="pr-payMode"></span></td></tr>
+    <tr><td>भुगतान संदर्भ / UTR</td><td><span id="pr-utr"></span></td></tr>
+    <tr><td><strong>कुल प्राप्त (Total Received)</strong></td><td><strong>रु. 500/-</strong></td></tr>
+  </table>
+
+  <div class="section-head">यह शुल्क क्यों लिया जाता है (Purpose of this Fee)</div>
+  <div class="purpose-box">
+    <ol>
+      <li>यह रु. 500/- का शुल्क पूर्णतः एवं केवल Ruralift द्वारा प्रथम मुलाकात/परामर्श बैठक में दिए गए <strong>समय एवं परामर्श (Time &amp; Consultancy)</strong> के प्रतिफल में है — जिसमें ग्राहक की ऋण पात्रता का आकलन, उपयुक्त विकल्पों पर मार्गदर्शन एवं प्रश्नों का समाधान शामिल है।</li>
+      <li>यह शुल्क सभी ग्राहकों पर <strong>समान रूप से (निश्चित रु. 500/-)</strong> लागू होता है। यह किसी ऋण की स्वीकृति, राशि या वितरण की कोई गारंटी नहीं है।</li>
+      <li>चूँकि यह केवल समय एवं परामर्श का मूल्य है, यह शुल्क <strong>अप्रतिदेय (Non-Refundable)</strong> है — ऋण स्वीकृत हो अथवा न हो।</li>
+      <li>यह प्रारंभिक परामर्श शुल्क ऋण के सफल वितरण पर देय <strong>सफलता-आधारित परामर्श शुल्क</strong> तथा ऋण संस्थान द्वारा दिए जाने वाले किसी भी DSA/कमीशन से पूर्णतः <strong>पृथक एवं स्वतंत्र</strong> है।</li>
+      <li>इस शुल्क के अतिरिक्त, ऋण वितरण से पूर्व किसी भी चरण में कोई अन्य शुल्क या प्रसंस्करण शुल्क नहीं लिया जाता।</li>
+    </ol>
+  </div>
+
+  <table class="sig-table" style="margin-top:30px">
+    <tr>
+      <td width="50%">
+        <strong>Ruralift की ओर से (प्राप्तकर्ता)</strong>
+        <div class="sig-box"></div>
+        <div>नाम: Shaan Singh Bilhatiya</div>
+        <div>(हस्ताक्षर / Signature)</div>
+        <br>
+        <div>दिनांक: _____ / _____ / __________</div>
+      </td>
+      <td width="50%">
+        <strong>ग्राहक की स्वीकृति</strong>
+        <div class="sig-box"></div>
+        <div>नाम: <span id="pr-sig-name"></span></div>
+        <div>(हस्ताक्षर / Signature)</div>
+        <br>
+        <div>दिनांक: _____ / _____ / __________</div>
+      </td>
+    </tr>
+  </table>
+
+  <div class="footer-note">यह एक कंप्यूटर-जनित रसीद है। ग्राहक इस रसीद की एक प्रति प्राप्त करने की पुष्टि करता/करती है।<br><em>— रसीद समाप्त / End of Receipt —</em></div>
+</div>
+
+<!-- PRINT AREA: AGREEMENT -->
+<div class="print-area" id="print-agreement" style="display:none">
+  <div class="doc-header">
+    <img src="logo.jpg" class="doc-logo" alt="Ruralift">
+    <div class="doc-owner">स्वामी: Shaan Singh Bilhatiya | Udyam: UDYAM-MP-29-0021193</div>
+    <div class="doc-title-hi">ऋण सुविधा परामर्श अनुबंध</div>
+    <div class="doc-title-en">Loan Facility Consultancy Agreement</div>
+    <div class="doc-subtitle">(निश्चित प्रारंभिक परामर्श शुल्क एवं सफलता-आधारित शुल्क | भारतीय अनुबंध अधिनियम, 1872 के अंतर्गत)</div>
+  </div>
+
+  <div class="section-head">पक्षकार (इस अनुबंध के पक्ष)</div>
+  <table class="doc-table">
+    <colgroup><col style="width:28%"><col style="width:72%"></colgroup>
+    <tr>
+      <td width="30%"><strong>सेवा प्रदाता</strong></td>
+      <td>Ruralift (MSME/Udyam पंजीकृत स्वामित्व संस्था), स्वामी: Shaan Singh Bilhatiya, Udyam नं.: UDYAM-MP-29-0021193</td>
+    </tr>
+    <tr>
+      <td><strong>ग्राहक</strong></td>
+      <td>
+        नाम: <strong><span id="ag-name"></span></strong> &nbsp;&nbsp; आधार नं.: <span id="ag-aadhaar"></span><br>
+        पता: <span id="ag-address"></span><br>
+        मोबाइल: <span id="ag-mobile"></span>
+      </td>
+    </tr>
+    <tr>
+      <td><strong>सहमत ऋण राशि</strong></td>
+      <td>रु. <span id="ag-loanAmt"></span> (रुपये <span id="ag-loanAmtWords"></span> मात्र)</td>
+    </tr>
+    <tr>
+      <td><strong>अनुबंध दिनांक</strong></td>
+      <td>दिनांक: <span id="ag-date"></span> &nbsp;&nbsp; स्थान: <span id="ag-place"></span></td>
+    </tr>
+  </table>
+
+  <div class="section-head">1. सेवाओं का विवरण एवं सेवा की प्रकृति</div>
+  <p class="para">1.1 Ruralift एक MSME/Udyam पंजीकृत स्वतंत्र वित्तीय परामर्श एवं दस्तावेज़ सुविधा संस्था है जो ग्राहकों को <strong>परामर्श, दस्तावेज़ीकरण एवं सुविधा सेवाएं सर्वोत्तम प्रयास (best efforts) के आधार पर</strong> प्रदान करती है: (अ) ऋण पात्रता का विस्तृत आकलन एवं परामर्श, (ब) तुलनात्मक विश्लेषण एवं मार्गदर्शन, (स) दस्तावेजों की तैयारी, संकलन, सत्यापन एवं समीक्षा, (द) ऋण आवेदन की तैयारी एवं प्रस्तुतीकरण, (इ) ऋणदाता के साथ निरंतर अनुवर्ती कार्रवाई, (फ) सम्पूर्ण प्रक्रिया प्रबंधन एवं ग्राहक सहायता, (ग) ग्राहक शिक्षा।</p>
+  <p class="para">1.2 <strong>सेवा की प्रकृति:</strong> Ruralift की सेवाएं पूर्णतः "सर्वोत्तम प्रयास" (best efforts) आधारित स्वतंत्र परामर्श एवं सुविधा सेवाएं हैं। Ruralift ऋण स्वीकृति, ऋण राशि, ब्याज दर, या वितरण की समय-सीमा के संबंध में कोई गारंटी नहीं देता।</p>
+  <p class="para">1.3 <strong>संबंध की प्रकृति — मुख्य-से-मुख्य (Principal-to-Principal):</strong> Ruralift और ग्राहक के बीच का संबंध मुख्य-से-मुख्य आधार पर है। Ruralift ग्राहक का न्यासी, प्रत्ययी, एजेंट या कानूनी प्रतिनिधि नहीं है।</p>
+  <p class="para">1.4 <strong>DSA संबंध से पूर्ण पृथक्करण:</strong> ग्राहक स्वीकार करता है कि Ruralift का विभिन्न ऋण संस्थानों के साथ DSA/चैनल पार्टनर संबंध हो सकता है। यह अनुबंध उक्त DSA संबंध से पूर्णतः अलग, स्वतंत्र और असंबद्ध है।</p>
+
+  <div class="section-head">2. परामर्श शुल्क</div>
+  <table class="doc-table">
+    <colgroup><col style="width:45%"><col style="width:55%"></colgroup>
+    <tr><th>स्थिति</th><th>लागू शुल्क</th></tr>
+    <tr><td>प्रारंभिक परामर्श / प्रथम मुलाकात शुल्क</td><td><strong>रु. 500/- — निश्चित, अप्रतिदेय</strong></td></tr>
+    <tr><td>ऋणदाता द्वारा आवेदन अस्वीकृत (ग्राहक की चूक के बिना)</td><td><strong>शून्य — कोई शुल्क नहीं</strong></td></tr>
+    <tr>
+      <td>ऋण सफलतापूर्वक वितरित</td>
+      <td>सहमत परामर्श शुल्क: <strong>रु. <span id="ag-successFee"></span> (रुपये <span id="ag-successFeeWords"></span> मात्र)</strong> — वितरण पर Ruralift को तत्काल देय</td>
+    </tr>
+  </table>
+  <p class="para">2.1 प्रारंभिक परामर्श/मुलाकात शुल्क रु. 500/- प्रथम मुलाकात के समय देय एवं अप्रतिदेय है। 2.2 सफलता-आधारित परामर्श शुल्क केवल ऋण राशि के सफल वितरण के बाद देय होगा। 2.5 ऋण वितरण के 7 दिनों के भीतर भुगतान न होने पर 2% प्रति माह विलंब शुल्क लागू होगा।</p>
+
+  <div class="section-head">3. अग्रदिनांकित चेक (PDC) — सुरक्षा साधन</div>
+  <table class="doc-table">
+    <colgroup><col style="width:40%"><col style="width:60%"></colgroup>
+    <tr><th>विवरण</th><th>जानकारी</th></tr>
+    <tr><td>चेक नंबर</td><td><span id="ag-chequeNo"></span></td></tr>
+    <tr><td>बैंक का नाम एवं शाखा</td><td><span id="ag-chequeBankBranch"></span></td></tr>
+    <tr><td>खाताधारक का नाम</td><td><span id="ag-chequeHolder"></span></td></tr>
+    <tr><td>चेक राशि</td><td>रु. <span id="ag-chequeAmt"></span></td></tr>
+    <tr><td>चेक दिनांक</td><td><span id="ag-chequeDate"></span></td></tr>
+  </table>
+  <p class="para">3.3 PDC को Ruralift द्वारा केवल (अ) ऋण के सफल वितरण पर, या (ब) ग्राहक द्वारा अनुबंध भंग होने पर जमा किया जाएगा। 3.4 चेक की दिनांक मूल परिपक्वता तिथि से 30 दिन स्वतः बढ़ी हुई मानी जाएगी।</p>
+
+  <div class="section-head">4. ग्राहक द्वारा अनुबंध भंग एवं क्षतिपूर्ति</div>
+  <p class="para">4.2 <strong>नुकसान भरपाई (Liquidated Damages):</strong> अनुबंध भंग की स्थिति में ग्राहक सहमत ऋण राशि का 3% या सहमत परामर्श शुल्क — जो भी अधिक हो — Ruralift को देने का उत्तरदायी होगा। यह भारतीय अनुबंध अधिनियम, 1872 की धारा 74 के अंतर्गत उचित पूर्व-अनुमान (genuine pre-estimate) है।</p>
+
+  <div class="section-head">5. गैर-प्रतिस्पर्धा एवं गैर-परिवर्जन (Non-Circumvention)</div>
+  <p class="para">5.1 ऋण आवेदन सक्रिय रहने तक, ग्राहक Ruralift द्वारा परिचित कराए गए किसी भी ऋण संस्थान, बैंक अधिकारी, DSA, या संपर्क से सीधे ऋण सेवा प्राप्त करने का प्रयास नहीं करेगा।</p>
+  <p class="para">5.2 ऋण वितरण या अस्वीकृति के बाद 3 महीनों तक उन्हीं संपर्कों से सीधे संपर्क नहीं करेगा।</p>
+
+  <div class="section-head">6-15. अन्य प्रावधान (संक्षेप)</div>
+  <p class="para"><strong>धारा 6 — दायित्व की सीमा:</strong> Ruralift का अधिकतम दायित्व ग्राहक द्वारा वास्तव में भुगतान की गई परामर्श शुल्क राशि से अधिक नहीं होगा। | <strong>धारा 8 — गोपनीयता एवं डेटा सहमति:</strong> ग्राहक Ruralift को सेवाओं हेतु ऋण संस्थानों के साथ व्यक्तिगत जानकारी साझा करने की सहमति प्रदान करता है। | <strong>धारा 14 — विवाद समाधान:</strong> विवाद मध्यस्थता एवं सुलह अधिनियम, 1996 के अंतर्गत एकल मध्यस्थ द्वारा निपटाया जाएगा। अधिकार क्षेत्र: Ruralift के पंजीकृत कार्यालय का जिला। | <strong>धारा 15 — समग्र अनुबंध:</strong> यह अनुबंध दोनों पक्षों के बीच सभी पूर्व समझौतों को प्रतिस्थापित करता है।</p>
+
+  <div class="section-head">16. ग्राहक द्वारा घोषणा — स्वतंत्र इच्छा एवं सूचित सहमति</div>
+  <p class="para">मैं, <strong><span id="ag-decl-name"></span></strong>, एतद्द्वारा घोषणा करता/करती हूँ कि: (अ) मैंने इस अनुबंध को ध्यानपूर्वक पढ़ा और समझा है। (ब) मैं यह अनुबंध अपनी स्वतंत्र इच्छा से हस्ताक्षर कर रहा/रही हूँ — बिना किसी दबाव के। (स) मैं शुल्क संरचना को समझता/समझती हूँ। (द) मैं धारा 4 के परिणामों, PDC अनादरण के आपराधिक परिणामों (धारा 138 NI Act) से अवगत हूँ। (इ) Ruralift ने ऋण स्वीकृति की कोई गारंटी नहीं दी है। (फ) मैं Ruralift को व्यक्तिगत जानकारी ऋण संस्थानों के साथ साझा करने की सहमति देता/देती हूँ।</p>
+
+  <div class="section-head">17. हस्ताक्षर</div>
+  <table class="sig-table">
+    <tr>
+      <td width="50%">
+        <strong>Ruralift की ओर से (सेवा प्रदाता)</strong>
+        <div class="sig-box"></div>
+        <div>नाम: <strong>Shaan Singh Bilhatiya</strong></div>
+        <div>Udyam नं.: UDYAM-MP-29-0021193</div>
+        <div>(हस्ताक्षर / Signature)</div>
+        <br>
+        <div>दिनांक: _____ / _____ / __________</div>
+        <br>
+        <div><strong>अंगूठे का निशान / Thumb Impression:</strong></div>
+        <div style="border:1px solid #ccc;width:80px;height:50px;margin-top:4px"></div>
+      </td>
+      <td width="50%">
+        <strong>ग्राहक</strong>
+        <div class="sig-box"></div>
+        <div>नाम: <span id="ag-sig-name"></span></div>
+        <div>आधार नं.: <span id="ag-sig-aadhaar"></span></div>
+        <div>(हस्ताक्षर / Signature)</div>
+        <br>
+        <div>दिनांक: _____ / _____ / __________</div>
+        <br>
+        <div><strong>अंगूठे का निशान / Thumb Impression:</strong></div>
+        <div style="border:1px solid #ccc;width:80px;height:50px;margin-top:4px"></div>
+      </td>
+    </tr>
+  </table>
+
+  <div style="margin-top:16px">
+    <strong>गवाह (Witnesses)</strong>
+    <table class="sig-table">
+      <tr>
+        <td width="50%">
+          <strong>गवाह 1 (Witness 1)</strong>
+          <div class="sig-box"></div>
+          <div>नाम: _______________________________</div>
+          <div>(हस्ताक्षर / Signature)</div>
+          <div>आधार नं.: ___________________________</div>
+          <div>संपर्क: ______________________________</div>
+        </td>
+        <td width="50%">
+          <strong>गवाह 2 (Witness 2)</strong>
+          <div class="sig-box"></div>
+          <div>नाम: _______________________________</div>
+          <div>(हस्ताक्षर / Signature)</div>
+          <div>आधार नं.: ___________________________</div>
+          <div>संपर्क: ______________________________</div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- PDC RECEIPT on same print -->
+  <div class="page-break"></div>
+
+  <div class="doc-header" style="margin-top:0">
+    <img src="logo.jpg" class="doc-logo" alt="Ruralift">
+    <div class="doc-title-hi">अग्रदिनांकित चेक (PDC) स्वीकृति रसीद</div>
+    <div class="doc-title-en">RURALIFT — Post-Dated Cheque Acknowledgement Receipt</div>
+  </div>
+
+  <p class="para">यह स्वीकार किया जाता है कि Ruralift ने दिनांक <span id="pdc-date"></span> को निष्पादित ऋण सुविधा परामर्श अनुबंध के अनुसरण में ग्राहक से निम्नलिखित अग्रदिनांकित चेक सुरक्षा साधन के रूप में प्राप्त किया है।</p>
+
+  <table class="doc-table" style="margin-top:12px">
+    <colgroup><col style="width:42%"><col style="width:58%"></colgroup>
+    <tr><th colspan="2">PDC विवरण (Cheque Details)</th></tr>
+    <tr><td>प्राप्तकर्ता (ग्राहक का नाम)</td><td><strong><span id="pdc-name"></span></strong></td></tr>
+    <tr><td>ग्राहक मोबाइल</td><td><span id="pdc-mobile"></span></td></tr>
+    <tr><td>ग्राहक आधार नं.</td><td><span id="pdc-aadhaar"></span></td></tr>
+    <tr><td>चेक नं. (Cheque No.)</td><td><span id="pdc-chequeNo"></span></td></tr>
+    <tr><td>बैंक का नाम एवं शाखा</td><td><span id="pdc-chequeBankBranch"></span></td></tr>
+    <tr><td>चेक राशि (Amount) रु.</td><td><span id="pdc-chequeAmt"></span></td></tr>
+    <tr><td>चेक दिनांक (Cheque Date)</td><td><span id="pdc-chequeDate"></span></td></tr>
+    <tr><td>उद्देश्य (Purpose)</td><td>ऋण सुविधा परामर्श अनुबंध हेतु सुरक्षा</td></tr>
+    <tr><td>Ruralift की ओर से प्राप्त</td><td>Shaan Singh Bilhatiya</td></tr>
+    <tr><td>रसीद दिनांक (Receipt Date)</td><td><span id="pdc-receipt-date"></span></td></tr>
+  </table>
+
+  <div class="section-head" style="margin-top:14px">जमा करने की शर्तें:</div>
+  <ol style="margin-left:20px;line-height:1.8;font-size:10pt">
+    <li>यह PDC ऋण के सफल वितरण पर सहमत परामर्श शुल्क के रूप में जमा किया जाएगा।</li>
+    <li>यह PDC ग्राहक द्वारा अनुबंध भंग की स्थिति में नुकसान भरपाई (Liquidated Damages) के रूप में जमा किया जाएगा।</li>
+    <li>ग्राहक की किसी चूक के बिना ऋण अस्वीकृति की स्थिति में यह PDC 30 दिनों के भीतर वापस किया जाएगा।</li>
+    <li>चेक की दिनांक परिपक्वता तिथि से 30 दिन स्वतः बढ़ी हुई मानी जाएगी — बिना किसी पूर्व सूचना के।</li>
+    <li>चेक अनादरण की स्थिति में ग्राहक परक्राम्य लिखत अधिनियम, 1881 की धारा 138 के अंतर्गत आपराधिक रूप से दायी होगा।</li>
+  </ol>
+
+  <table class="sig-table" style="margin-top:24px">
+    <tr>
+      <td width="50%">
+        <strong>Ruralift की ओर से</strong>
+        <div class="sig-box"></div>
+        <div>नाम: Shaan Singh Bilhatiya</div>
+        <div>(हस्ताक्षर / Signature)</div>
+        <br>
+        <div>दिनांक: _____ / _____ / __________</div>
+      </td>
+      <td width="50%">
+        <strong>ग्राहक की स्वीकृति</strong>
+        <div class="sig-box"></div>
+        <div>नाम: <span id="pdc-sig-name"></span></div>
+        <div>(हस्ताक्षर / Signature)</div>
+        <br>
+        <div>दिनांक: _____ / _____ / __________</div>
+      </td>
+    </tr>
+  </table>
+  <div class="footer-note">— अनुबंध समाप्त —</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== STATE =====
+let currentCustomer = null;
+let editingId = null;
+let allCustomers = [];
+
+// ===== NAV =====
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('#sidebar nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  document.getElementById('nav-' + name)?.classList.add('active');
+  const titles = { dashboard: 'Dashboard', customers: 'All Customers', detail: 'Customer Detail' };
+  document.getElementById('page-title').textContent = titles[name] || name;
+  if (name === 'dashboard') loadDashboard();
+  if (name === 'customers') loadCustomers();
+}
+
+// ===== API =====
+async function api(method, path, body) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch('/api' + path, opts);
+  return r.json();
+}
+
+// ===== SEARCH =====
+function handleSearch(q) {
+  if (q.length > 0) {
+    showView('customers');
+    loadCustomers(q);
+  } else {
+    loadCustomers('');
+  }
+}
+
+// ===== DATE HELPERS =====
+function fmtDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d + (d.includes('T') ? '' : 'T00:00:00'));
+  return dt.toLocaleDateString('hi-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+function fmtDateDoc(d) {
+  if (!d) return '_____ / _____ / __________';
+  const [y, m, day] = d.split('-');
+  return `${day} / ${m} / ${y}`;
+}
+
+// ===== DASHBOARD =====
+async function loadDashboard() {
+  const customers = await api('GET', '/customers');
+  allCustomers = customers;
+  const now = new Date();
+  const thisMonth = customers.filter(c => {
+    const d = new Date(c.createdAt);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const today = customers.filter(c => {
+    const d = new Date(c.createdAt);
+    return d.toDateString() === now.toDateString();
+  });
+  document.getElementById('stat-total').textContent = customers.length;
+  document.getElementById('stat-month').textContent = thisMonth.length;
+  document.getElementById('stat-today').textContent = today.length;
+
+  const tbody = document.getElementById('dashboard-table');
+  const recent = customers.slice(0, 10);
+  tbody.innerHTML = recent.length ? recent.map(c => rowHtml(c)).join('') : emptyRow(6);
+}
+
+// ===== CUSTOMERS =====
+async function loadCustomers(q = '') {
+  const url = q ? `/customers?q=${encodeURIComponent(q)}` : '/customers';
+  const customers = await api('GET', url);
+  allCustomers = customers;
+  document.getElementById('customer-count').textContent = customers.length;
+  const tbody = document.getElementById('customers-table');
+  tbody.innerHTML = customers.length ? customers.map(c => rowHtml(c, true)).join('') : emptyRow(7);
+}
+
+function rowHtml(c, showLoan = false) {
+  const loan = showLoan ? `<td>${c.loanAmt ? 'रु. ' + Number(c.loanAmt).toLocaleString('en-IN') : '—'}</td>` : '';
+  return `<tr>
+    <td><strong>${c.name || '—'}</strong></td>
+    <td>${c.mobile || '—'}</td>
+    <td>${c.aadhaar || '—'}</td>
+    ${loan}
+    <td>${c.date ? fmtDate(c.date) : '—'}</td>
+    <td>${c.receiptNo || '—'}</td>
+    <td>
+      <button class="btn btn-outline btn-sm" onclick="viewCustomer('${c.id}')">View</button>
+      <button class="btn btn-outline btn-sm" onclick="openEditModal('${c.id}')">Edit</button>
+    </td>
+  </tr>`;
+}
+
+function emptyRow(cols) {
+  return `<tr><td colspan="${cols}" class="empty-state"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg><br>No customers found</td></tr>`;
+}
+
+// ===== DETAIL =====
+async function viewCustomer(id) {
+  const c = await api('GET', '/customers/' + id);
+  currentCustomer = c;
+  showView('detail');
+
+  document.getElementById('detail-name').textContent = c.name || 'Unknown';
+  document.getElementById('detail-sub').textContent = `Mobile: ${c.mobile || '—'} | Aadhaar: ${c.aadhaar || '—'} | Added: ${fmtDate(c.createdAt)}`;
+
+  const fields = [
+    ['Name', c.name], ['Mobile', c.mobile], ['Aadhaar', c.aadhaar],
+    ['Date', c.date ? fmtDate(c.date) : '—'], ['Place', c.place], ['Address', c.address],
+    ['Receipt No.', c.receiptNo], ['Payment Mode', c.payMode], ['UTR', c.utr],
+    ['Loan Amount', c.loanAmt ? 'रु. ' + Number(c.loanAmt).toLocaleString('en-IN') : '—'],
+    ['Loan (Words)', c.loanAmtWords],
+    ['Success Fee', c.successFee ? 'रु. ' + Number(c.successFee).toLocaleString('en-IN') : '—'],
+    ['Success Fee (Words)', c.successFeeWords],
+    ['Cheque No.', c.chequeNo], ['Bank & Branch', c.chequeBankBranch],
+    ['Cheque Holder', c.chequeHolder],
+    ['Cheque Amt', c.chequeAmt ? 'रु. ' + c.chequeAmt : '—'],
+    ['Cheque Date', c.chequeDate ? fmtDate(c.chequeDate) : '—'],
+    ['Notes', c.notes]
+  ];
+
+  document.getElementById('detail-info-grid').innerHTML = fields.map(([l, v]) =>
+    `<div class="info-item"><div class="lbl">${l}</div><div class="val">${v || '—'}</div></div>`
+  ).join('');
+
+  document.getElementById('detail-edit-btn').onclick = () => openEditModal(id);
+  document.getElementById('detail-delete-btn').onclick = () => deleteCustomer(id);
+  document.getElementById('print-receipt-btn').onclick = () => printReceipt(c);
+  document.getElementById('print-agreement-btn').onclick = () => printAgreement(c);
+}
+
+// ===== MODAL =====
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = 'New Customer';
+  clearForm();
+  // Auto-set today
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('modal').classList.add('open');
+}
+
+async function openEditModal(id) {
+  const c = await api('GET', '/customers/' + id);
+  editingId = id;
+  document.getElementById('modal-title').textContent = 'Edit Customer';
+  document.getElementById('f-name').value = c.name || '';
+  document.getElementById('f-mobile').value = c.mobile || '';
+  document.getElementById('f-aadhaar').value = c.aadhaar || '';
+  document.getElementById('f-date').value = c.date || '';
+  document.getElementById('f-place').value = c.place || '';
+  document.getElementById('f-address').value = c.address || '';
+  document.getElementById('f-receiptNo').value = c.receiptNo || '';
+  document.getElementById('f-payMode').value = c.payMode || '';
+  document.getElementById('f-utr').value = c.utr || '';
+  document.getElementById('f-loanAmt').value = c.loanAmt || '';
+  document.getElementById('f-loanAmtWords').value = c.loanAmtWords || '';
+  document.getElementById('f-successFee').value = c.successFee || '';
+  document.getElementById('f-successFeeWords').value = c.successFeeWords || '';
+  document.getElementById('f-chequeNo').value = c.chequeNo || '';
+  document.getElementById('f-chequeBankBranch').value = c.chequeBankBranch || '';
+  document.getElementById('f-chequeHolder').value = c.chequeHolder || '';
+  document.getElementById('f-chequeAmt').value = c.chequeAmt || '';
+  document.getElementById('f-chequeDate').value = c.chequeDate || '';
+  document.getElementById('f-notes').value = c.notes || '';
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  editingId = null;
+}
+
+function clearForm() {
+  ['f-name','f-mobile','f-aadhaar','f-date','f-place','f-address','f-receiptNo','f-payMode',
+   'f-utr','f-loanAmt','f-loanAmtWords','f-successFee','f-successFeeWords','f-chequeNo',
+   'f-chequeBankBranch','f-chequeHolder','f-chequeAmt','f-chequeDate','f-notes'
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+async function saveCustomer() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { toast('Name is required'); return; }
+
+  const data = {
+    name, mobile: document.getElementById('f-mobile').value.trim(),
+    aadhaar: document.getElementById('f-aadhaar').value.trim(),
+    date: document.getElementById('f-date').value,
+    place: document.getElementById('f-place').value.trim(),
+    address: document.getElementById('f-address').value.trim(),
+    receiptNo: document.getElementById('f-receiptNo').value.trim(),
+    payMode: document.getElementById('f-payMode').value,
+    utr: document.getElementById('f-utr').value.trim(),
+    loanAmt: document.getElementById('f-loanAmt').value.trim(),
+    loanAmtWords: document.getElementById('f-loanAmtWords').value.trim(),
+    successFee: document.getElementById('f-successFee').value.trim(),
+    successFeeWords: document.getElementById('f-successFeeWords').value.trim(),
+    chequeNo: document.getElementById('f-chequeNo').value.trim(),
+    chequeBankBranch: document.getElementById('f-chequeBankBranch').value.trim(),
+    chequeHolder: document.getElementById('f-chequeHolder').value.trim(),
+    chequeAmt: document.getElementById('f-chequeAmt').value.trim(),
+    chequeDate: document.getElementById('f-chequeDate').value,
+    notes: document.getElementById('f-notes').value.trim()
+  };
+
+  if (editingId) {
+    const c = await api('PUT', '/customers/' + editingId, data);
+    closeModal();
+    toast('Customer updated');
+    viewCustomer(c.id);
+  } else {
+    const c = await api('POST', '/customers', data);
+    closeModal();
+    toast('Customer saved');
+    viewCustomer(c.id);
+  }
+}
+
+async function deleteCustomer(id) {
+  if (!confirm('Delete this customer? This cannot be undone.')) return;
+  await api('DELETE', '/customers/' + id);
+  toast('Customer deleted');
+  showView('customers');
+}
+
+// ===== PRINT =====
+function set(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val || '—';
+}
+
+function printReceipt(c) {
+  set('pr-receiptNo', c.receiptNo);
+  set('pr-date', fmtDateDoc(c.date));
+  set('pr-place', c.place);
+  set('pr-name', c.name);
+  set('pr-mobile', c.mobile);
+  set('pr-aadhaar', c.aadhaar);
+  set('pr-payMode', c.payMode);
+  set('pr-utr', c.utr);
+  set('pr-sig-name', c.name);
+
+  hidePrintAreas();
+  document.getElementById('print-receipt').style.display = 'block';
+  window.print();
+}
+
+function printAgreement(c) {
+  const today = new Date().toISOString().split('T')[0];
+  set('ag-name', c.name);
+  set('ag-aadhaar', c.aadhaar);
+  set('ag-address', c.address);
+  set('ag-mobile', c.mobile);
+  set('ag-loanAmt', c.loanAmt);
+  set('ag-loanAmtWords', c.loanAmtWords);
+  set('ag-date', fmtDateDoc(c.date));
+  set('ag-place', c.place);
+  set('ag-successFee', c.successFee);
+  set('ag-successFeeWords', c.successFeeWords);
+  set('ag-chequeNo', c.chequeNo);
+  set('ag-chequeBankBranch', c.chequeBankBranch);
+  set('ag-chequeHolder', c.chequeHolder);
+  set('ag-chequeAmt', c.chequeAmt);
+  set('ag-chequeDate', fmtDateDoc(c.chequeDate));
+  set('ag-decl-name', c.name);
+  set('ag-sig-name', c.name);
+  set('ag-sig-aadhaar', c.aadhaar);
+
+  // PDC receipt fields
+  set('pdc-date', fmtDateDoc(c.date));
+  set('pdc-name', c.name);
+  set('pdc-mobile', c.mobile);
+  set('pdc-aadhaar', c.aadhaar);
+  set('pdc-chequeNo', c.chequeNo);
+  set('pdc-chequeBankBranch', c.chequeBankBranch);
+  set('pdc-chequeAmt', c.chequeAmt);
+  set('pdc-chequeDate', fmtDateDoc(c.chequeDate));
+  set('pdc-receipt-date', fmtDateDoc(today));
+  set('pdc-sig-name', c.name);
+
+  hidePrintAreas();
+  document.getElementById('print-agreement').style.display = 'block';
+  window.print();
+}
+
+function hidePrintAreas() {
+  document.getElementById('print-receipt').style.display = 'none';
+  document.getElementById('print-agreement').style.display = 'none';
+}
+
+window.addEventListener('afterprint', hidePrintAreas);
+
+// ===== TOAST =====
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ===== CLOSE MODAL ON OUTSIDE CLICK =====
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ===== INIT =====
+loadDashboard();
+</script>
+</body>
+</html>
