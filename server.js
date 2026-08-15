@@ -486,12 +486,20 @@ function saveConfig(cfg) {
 // ===== GMAIL OAUTH2 =====
 const { google } = require('googleapis');
 
+function getRedirectUri() {
+  // Railway sets RAILWAY_PUBLIC_DOMAIN automatically
+  if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+    return 'https://' + process.env.RAILWAY_PUBLIC_DOMAIN + '/oauth2callback';
+  }
+  return 'http://localhost:' + PORT + '/oauth2callback';
+}
+
 function getOAuth2Client() {
   const cfg = loadConfig();
   const client = new google.auth.OAuth2(
     cfg.oauthClientId,
     cfg.oauthClientSecret,
-    'http://localhost:' + PORT + '/oauth2callback'
+    getRedirectUri()
   );
   if (cfg.oauthTokens) client.setCredentials(cfg.oauthTokens);
   // Auto-save refreshed tokens
