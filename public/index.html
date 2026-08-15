@@ -630,6 +630,57 @@ function handleSearch(q) {
   loadCustomers(q);
 }
 
+// ===== HINDI NUMBER TO WORDS =====
+function numberToHindiWords(n) {
+  const num = parseInt(n, 10);
+  if (isNaN(num) || num < 0) return '';
+  if (num === 0) return 'शून्य मात्र';
+
+  const ones = ['', 'एक', 'दो', 'तीन', 'चार', 'पाँच', 'छः', 'सात', 'आठ', 'नौ',
+    'दस', 'ग्यारह', 'बारह', 'तेरह', 'चौदह', 'पंद्रह', 'सोलह', 'सत्रह', 'अठारह', 'उन्नीस',
+    'बीस', 'इक्कीस', 'बाईस', 'तेईस', 'चौबीस', 'पच्चीस', 'छब्बीस', 'सत्ताईस', 'अट्ठाईस', 'उनतीस',
+    'तीस', 'इकतीस', 'बत्तीस', 'तैंतीस', 'चौंतीस', 'पैंतीस', 'छत्तीस', 'सैंतीस', 'अड़तीस', 'उनतालीस',
+    'चालीस', 'इकतालीस', 'बयालीस', 'तैंतालीस', 'चवालीस', 'पैंतालीस', 'छियालीस', 'सैंतालीस', 'अड़तालीस', 'उनचास',
+    'पचास', 'इक्यावन', 'बावन', 'तिरपन', 'चौवन', 'पचपन', 'छप्पन', 'सत्तावन', 'अट्ठावन', 'उनसठ',
+    'साठ', 'इकसठ', 'बासठ', 'तिरसठ', 'चौंसठ', 'पैंसठ', 'छियासठ', 'सड़सठ', 'अड़सठ', 'उनहत्तर',
+    'सत्तर', 'इकहत्तर', 'बहत्तर', 'तिहत्तर', 'चौहत्तर', 'पचहत्तर', 'छिहत्तर', 'सतहत्तर', 'अठहत्तर', 'उनासी',
+    'अस्सी', 'इक्यासी', 'बयासी', 'तिरासी', 'चौरासी', 'पचासी', 'छियासी', 'सत्तासी', 'अट्ठासी', 'नवासी',
+    'नब्बे', 'इक्यानवे', 'बानवे', 'तिरानवे', 'चौरानवे', 'पचानवे', 'छियानवे', 'सत्तानवे', 'अट्ठानवे', 'निन्यानवे'
+  ];
+
+  function convertGroup(n) {
+    if (n === 0) return '';
+    if (n < 100) return ones[n];
+    const h = Math.floor(n / 100);
+    const r = n % 100;
+    return (h > 0 ? ones[h] + ' सौ' : '') + (r > 0 ? ' ' + ones[r] : '');
+  }
+
+  let result = '';
+  const crore = Math.floor(num / 10000000);
+  const lakh  = Math.floor((num % 10000000) / 100000);
+  const thou  = Math.floor((num % 100000) / 1000);
+  const rest  = num % 1000;
+
+  if (crore > 0) result += convertGroup(crore) + ' करोड़ ';
+  if (lakh  > 0) result += convertGroup(lakh)  + ' लाख ';
+  if (thou  > 0) result += convertGroup(thou)  + ' हजार ';
+  if (rest  > 0) result += convertGroup(rest);
+
+  return result.trim() + ' मात्र';
+}
+
+function attachAutoWords(figuresId, wordsId) {
+  const figEl  = document.getElementById(figuresId);
+  const wordsEl = document.getElementById(wordsId);
+  if (!figEl || !wordsEl) return;
+  figEl.addEventListener('input', () => {
+    const val = figEl.value.trim();
+    if (val === '') { wordsEl.value = ''; return; }
+    wordsEl.value = numberToHindiWords(val);
+  });
+}
+
 // ===== DATE HELPERS =====
 function fmtDate(d) {
   if (!d) return '—';
@@ -1550,6 +1601,12 @@ loadCustomers();
   }
 
 
+
+// ===== AUTO WORDS WIRING =====
+document.addEventListener('DOMContentLoaded', () => {
+  attachAutoWords('f-loanAmt', 'f-loanAmtWords');
+  attachAutoWords('f-successFee', 'f-successFeeWords');
+});
 
 </script>
 </body>
