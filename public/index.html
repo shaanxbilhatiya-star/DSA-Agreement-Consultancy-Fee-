@@ -1187,22 +1187,36 @@ This is an electronically generated email. This email, along with its attachment
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
   const btn = document.getElementById('send-email-btn');
+  const resetBtn = () => { if (btn) { btn.disabled = false; btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> 📧 Send Email to Customer'; } };
   if (btn) { btn.disabled = true; btn.textContent = '⏳ Sending…'; }
   toast('📤 Sending email with attachments…');
 
+  // Timeout: auto-reset button after 60s if request hangs
+  const timeoutId = setTimeout(() => {
+    resetBtn();
+    toast('❌ Request timed out. Check Gmail connection and try again.');
+  }, 60000);
+
   try {
+    const controller = new AbortController();
     const result = await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customerId: c.id, toEmail: recipient, subject, body })
+      body: JSON.stringify({ customerId: c.id, toEmail: recipient, subject, body }),
+      signal: controller.signal
     });
     const data = await result.json();
     if (!result.ok) throw new Error(data.error || 'Send failed');
     toast(`✅ Email sent! (${data.attached} file${data.attached !== 1 ? 's' : ''} attached automatically)`);
   } catch (e) {
-    toast('❌ ' + (e.message || 'Email failed'));
+    if (e.name === 'AbortError') {
+      toast('❌ Email request was cancelled.');
+    } else {
+      toast('❌ ' + (e.message || 'Email failed'));
+    }
   } finally {
-    if (btn) { btn.disabled = false; btn.textContent = '📧 Send Email to Customer'; }
+    clearTimeout(timeoutId);
+    resetBtn();
   }
 }
 
@@ -1659,6 +1673,9 @@ loadCustomers();
 document.addEventListener('DOMContentLoaded', () => {
   attachAutoWords('f-loanAmt', 'f-loanAmtWords');
   attachAutoWords('f-successFee', 'f-successFeeWords');
+  // Safety: always reset send button on page load in case it was stuck
+  const emailBtn = document.getElementById('send-email-btn');
+  if (emailBtn) { emailBtn.disabled = false; }
 });
 
 </script>
