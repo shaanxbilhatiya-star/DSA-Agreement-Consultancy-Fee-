@@ -410,19 +410,7 @@ textarea { resize: vertical; min-height: 70px; }
           <label>Receipt No. (रसीद नं.) — Auto-generated</label>
           <input type="text" id="f-receiptNo" placeholder="Auto-generated" readonly style="background:#f3f4f6;cursor:not-allowed">
         </div>
-        <div class="form-group">
-          <label>Payment Mode (भुगतान का माध्यम)</label>
-          <select id="f-payMode">
-            <option value="">Select</option>
-            <option value="नकद (Cash)">नकद (Cash)</option>
-            <option value="UPI">UPI</option>
-            <option value="बैंक हस्तांतरण (Bank Transfer)">बैंक हस्तांतरण (Bank Transfer)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Payment Reference / UTR</label>
-          <input type="text" id="f-utr" placeholder="UTR / Transaction ID">
-        </div>
+
 
         <div class="section-title">📄 Agreement Details</div>
 
@@ -605,7 +593,7 @@ async function viewCustomer(id) {
   const fields = [
     ['Name', c.name], ['Mobile', c.mobile], ['Aadhaar', c.aadhaar],
     ['Date', c.date ? fmtDate(c.date) : '—'], ['Place', c.place], ['Address', c.address],
-    ['Receipt No.', c.receiptNo], ['Payment Mode', c.payMode], ['UTR', c.utr],
+    ['Receipt No.', c.receiptNo],
     ['Loan Amount', c.loanAmt ? 'रु. ' + Number(c.loanAmt).toLocaleString('en-IN') : '—'],
     ['Loan (Words)', c.loanAmtWords],
     ['Success Fee', c.successFee ? 'रु. ' + Number(c.successFee).toLocaleString('en-IN') : '—'],
@@ -662,8 +650,7 @@ async function openEditModal(id) {
   receiptEl.removeAttribute('readonly');
   receiptEl.style.background = '#fff';
   receiptEl.style.cursor = '';
-  document.getElementById('f-payMode').value = c.payMode || '';
-  document.getElementById('f-utr').value = c.utr || '';
+
   document.getElementById('f-loanAmt').value = c.loanAmt || '';
   document.getElementById('f-loanAmtWords').value = c.loanAmtWords || '';
   document.getElementById('f-successFee').value = c.successFee || '';
@@ -683,8 +670,8 @@ function closeModal() {
 }
 
 function clearForm() {
-  ['f-name','f-mobile','f-aadhaar','f-date','f-place','f-address','f-receiptNo','f-payMode',
-   'f-utr','f-loanAmt','f-loanAmtWords','f-successFee','f-successFeeWords','f-chequeNo',
+  ['f-name','f-mobile','f-aadhaar','f-date','f-place','f-address','f-receiptNo',
+   'f-loanAmt','f-loanAmtWords','f-successFee','f-successFeeWords','f-chequeNo',
    'f-chequeBankBranch','f-chequeHolder','f-chequeAmt','f-chequeDate','f-notes'
   ].forEach(id => {
     const el = document.getElementById(id);
@@ -703,8 +690,7 @@ async function saveCustomer() {
     place: document.getElementById('f-place').value.trim(),
     address: document.getElementById('f-address').value.trim(),
     receiptNo: document.getElementById('f-receiptNo').value.trim(),
-    payMode: document.getElementById('f-payMode').value,
-    utr: document.getElementById('f-utr').value.trim(),
+
     loanAmt: document.getElementById('f-loanAmt').value.trim(),
     loanAmtWords: document.getElementById('f-loanAmtWords').value.trim(),
     successFee: document.getElementById('f-successFee').value.trim(),
@@ -945,7 +931,6 @@ This email confirms that we have received your loan consultation application wit
 • Receipt No: ${receiptNo}
 • Requested Loan Amount: ${loanAmt}
 • Consultation Fee:  (Paid)
-• Payment Mode: ${c.payMode || '—'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📎 Attached Documents:
@@ -1004,8 +989,7 @@ function printReceipt(c) {
   params.set('name', c.name || '');
   params.set('mobile', c.mobile || '');
   params.set('aadhaar', c.aadhaar || '');
-  params.set('payMode', c.payMode || '');
-  params.set('utr', c.utr || '');
+
   window.open('receipt.html?' + params.toString(), '_blank');
 }
 
