@@ -546,7 +546,13 @@ app.get('/api/gmail-auth', (req, res) => {
   const url = client.generateAuthUrl({
     access_type: 'offline',
     prompt: 'consent',
-    scope: ['https://www.googleapis.com/auth/gmail.send']
+    // NOTE: gmail.send alone does NOT grant access to gmail.users.getProfile.
+    // userinfo.email is added so we can read the connected account's email
+    // address via the lightweight OAuth2 userinfo endpoint instead.
+    scope: [
+      'https://www.googleapis.com/auth/gmail.send',
+      'https://www.googleapis.com/auth/userinfo.email'
+    ]
   });
   res.redirect(url);
 });
@@ -562,10 +568,12 @@ app.get('/oauth2callback', async (req, res) => {
     const { tokens } = await client.getToken(code);
     client.setCredentials(tokens);
 
-    // Get user's email address
-    const gmail = google.gmail({ version: 'v1', auth: client });
-    const profile = await gmail.users.getProfile({ userId: 'me' });
-    const email = profile.data.emailAddress;
+    // Get user's email address via the OAuth2 userinfo endpoint.
+    // (gmail.users.getProfile requires a broader Gmail scope than
+    // gmail.send provides, which was causing "Insufficient Permission".)
+    const oauth2 = google.oauth2({ version: 'v2', auth: client });
+    const userinfo = await oauth2.userinfo.get();
+    const email = userinfo.data.email;
 
     const cfg = loadConfig();
     cfg.oauthTokens = tokens;
