@@ -1227,7 +1227,7 @@ loadDashboard();
     if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
   }
 
-  function redoRecording() {
+  async function redoRecording() {
     recordedBlob = null; recordedChunks = [];
     document.getElementById('video-save-status').textContent = '';
     // Restart preview stream
