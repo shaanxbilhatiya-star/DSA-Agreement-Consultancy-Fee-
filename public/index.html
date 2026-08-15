@@ -53,12 +53,12 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray-50
   padding: 0 28px; height: 60px; display: flex; align-items: center;
   justify-content: space-between; position: sticky; top: 0; z-index: 50;
 }
-#topbar h1 { font-size: 18px; font-weight: 700; color: var(--navy); }
-#topbar .search-wrap { position: relative; }
+#topbar h1 { font-size: 18px; font-weight: 700; color: var(--navy); flex-shrink: 0; margin-right: 24px; }
+#topbar .search-wrap { position: relative; flex: 1; max-width: 720px; }
 #topbar input {
-  width: 280px; padding: 8px 12px 8px 36px; border: 1px solid var(--gray-200);
+  width: 100%; padding: 8px 12px 8px 36px; border: 1px solid var(--gray-200);
   border-radius: 8px; font-size: 14px; background: var(--gray-50); outline: none;
-  transition: border .15s;
+  transition: border .15s; box-sizing: border-box;
 }
 #topbar input:focus { border-color: var(--purple); background: #fff; }
 #topbar .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--gray-400); }
