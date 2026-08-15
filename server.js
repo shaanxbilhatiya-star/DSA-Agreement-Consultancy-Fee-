@@ -483,96 +483,167 @@ function saveConfig(cfg) {
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2));
 }
 
-// GET /api/email-config — return config (mask password)
+// ===== GMAIL OAUTH2 =====
+const { google } = require('googleapis');
+
+function getOAuth2Client() {
+  const cfg = loadConfig();
+  const client = new google.auth.OAuth2(
+    cfg.oauthClientId,
+    cfg.oauthClientSecret,
+    'http://localhost:' + PORT + '/oauth2callback'
+  );
+  if (cfg.oauthTokens) client.setCredentials(cfg.oauthTokens);
+  // Auto-save refreshed tokens
+  client.on('tokens', tokens => {
+    const c = loadConfig();
+    c.oauthTokens = { ...c.oauthTokens, ...tokens };
+    saveConfig(c);
+  });
+  return client;
+}
+
+// GET /api/email-config — return current OAuth status
 app.get('/api/email-config', (req, res) => {
   const cfg = loadConfig();
-  res.json({ gmailUser: cfg.gmailUser || '', hasPassword: !!cfg.gmailPass });
+  res.json({
+    hasClientId:     !!cfg.oauthClientId,
+    hasClientSecret: !!cfg.oauthClientSecret,
+    isConnected:     !!(cfg.oauthTokens && cfg.oauthTokens.refresh_token),
+    gmailUser:       cfg.gmailUser || ''
+  });
 });
 
-// POST /api/email-config — save Gmail credentials
+// POST /api/email-config — save Client ID + Secret
 app.post('/api/email-config', (req, res) => {
-  const { gmailUser, gmailPass } = req.body;
-  if (!gmailUser || !gmailPass) return res.status(400).json({ error: 'Email and App Password required' });
+  const { oauthClientId, oauthClientSecret } = req.body;
+  if (!oauthClientId || !oauthClientSecret) {
+    return res.status(400).json({ error: 'Client ID and Client Secret required' });
+  }
   const cfg = loadConfig();
-  cfg.gmailUser = gmailUser.trim();
-  cfg.gmailPass = gmailPass.trim();
+  cfg.oauthClientId     = oauthClientId.trim();
+  cfg.oauthClientSecret = oauthClientSecret.trim();
+  delete cfg.oauthTokens; // reset tokens when credentials change
   saveConfig(cfg);
   res.json({ ok: true });
 });
 
-// POST /api/send-email — send email with auto-attached PDFs and video
+// GET /api/gmail-auth — generate OAuth2 consent URL and redirect
+app.get('/api/gmail-auth', (req, res) => {
+  const cfg = loadConfig();
+  if (!cfg.oauthClientId || !cfg.oauthClientSecret) {
+    return res.status(400).send('Client ID/Secret not set. Configure in Gmail Setup first.');
+  }
+  const client = getOAuth2Client();
+  const url = client.generateAuthUrl({
+    access_type: 'offline',
+    prompt: 'consent',
+    scope: ['https://www.googleapis.com/auth/gmail.send']
+  });
+  res.redirect(url);
+});
+
+// GET /oauth2callback — handle OAuth2 redirect from Google
+app.get('/oauth2callback', async (req, res) => {
+  const { code, error } = req.query;
+  if (error || !code) {
+    return res.send(`<h2>❌ Authorization failed: ${error || 'no code'}</h2><a href="/">Back to CRM</a>`);
+  }
+  try {
+    const client = getOAuth2Client();
+    const { tokens } = await client.getToken(code);
+    client.setCredentials(tokens);
+
+    // Get user's email address
+    const gmail = google.gmail({ version: 'v1', auth: client });
+    const profile = await gmail.users.getProfile({ userId: 'me' });
+    const email = profile.data.emailAddress;
+
+    const cfg = loadConfig();
+    cfg.oauthTokens = tokens;
+    cfg.gmailUser = email;
+    saveConfig(cfg);
+
+    res.send(`
+      <html><body style="font-family:sans-serif;text-align:center;padding:60px;background:#f0fdf4;">
+        <h2 style="color:#15803d">✅ Gmail Connected!</h2>
+        <p style="font-size:18px">Emails will now send from <strong>${email}</strong></p>
+        <p style="color:#666">You can close this tab and return to the CRM.</p>
+        <script>setTimeout(()=>window.close(),3000)</script>
+      </body></html>
+    `);
+  } catch (e) {
+    console.error('OAuth callback error:', e.message);
+    res.send(`<h2>❌ Error: ${e.message}</h2><a href="/">Back to CRM</a>`);
+  }
+});
+
+// POST /api/send-email — send via Gmail API with auto-attached files
 app.post('/api/send-email', async (req, res) => {
   const cfg = loadConfig();
-  if (!cfg.gmailUser || !cfg.gmailPass) {
-    return res.status(400).json({ error: 'Gmail not configured. Please set up email settings first.' });
+  if (!cfg.oauthTokens || !cfg.oauthTokens.refresh_token) {
+    return res.status(400).json({ error: 'Gmail not connected. Click "Connect Gmail" in settings.' });
   }
 
   const { customerId, toEmail, subject, body } = req.body;
   if (!customerId || !toEmail) {
-    return res.status(400).json({ error: 'Customer ID and recipient email are required.' });
+    return res.status(400).json({ error: 'Customer ID and recipient email required.' });
   }
 
   const state = loadState();
   const c = state.customers.find(x => x.id === customerId);
   if (!c) return res.status(404).json({ error: 'Customer not found' });
 
-  // Build attachments list
+  // Build nodemailer attachments
   const attachments = [];
-
   if (c.agreementPdf) {
     const p = path.join(UPLOADS_DIR, c.agreementPdf);
-    if (fs.existsSync(p)) {
-      attachments.push({
-        filename: `Signed_Agreement_${(c.name || 'Customer').replace(/\s+/g, '_')}.pdf`,
-        path: p,
-        contentType: 'application/pdf'
-      });
-    }
+    if (fs.existsSync(p)) attachments.push({
+      filename: `Signed_Agreement_${(c.name||'Customer').replace(/\s+/g,'_')}.pdf`,
+      path: p, contentType: 'application/pdf'
+    });
   }
-
   if (c.receiptPdf) {
     const p = path.join(UPLOADS_DIR, c.receiptPdf);
-    if (fs.existsSync(p)) {
-      attachments.push({
-        filename: `Consultancy_Receipt_${(c.name || 'Customer').replace(/\s+/g, '_')}.pdf`,
-        path: p,
-        contentType: 'application/pdf'
-      });
-    }
+    if (fs.existsSync(p)) attachments.push({
+      filename: `Consultancy_Receipt_${(c.name||'Customer').replace(/\s+/g,'_')}.pdf`,
+      path: p, contentType: 'application/pdf'
+    });
   }
-
-  // Attach latest video if present
   if (fs.existsSync(VIDEO_DIR)) {
     const prefix = 'video-' + customerId + '-';
     const videos = fs.readdirSync(VIDEO_DIR)
       .filter(f => f.startsWith(prefix) && f.endsWith('.webm'))
       .sort().reverse();
-    if (videos.length > 0) {
-      attachments.push({
-        filename: `VideoVerification_${(c.name || 'Customer').replace(/\s+/g, '_')}.webm`,
-        path: path.join(VIDEO_DIR, videos[0]),
-        contentType: 'video/webm'
-      });
-    }
+    if (videos.length > 0) attachments.push({
+      filename: `VideoVerification_${(c.name||'Customer').replace(/\s+/g,'_')}.webm`,
+      path: path.join(VIDEO_DIR, videos[0]), contentType: 'video/webm'
+    });
   }
 
   try {
+    const auth = getOAuth2Client();
     const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: { user: cfg.gmailUser, pass: cfg.gmailPass }
+      service: 'gmail',
+      auth: {
+        type: 'OAuth2',
+        user: cfg.gmailUser,
+        clientId: cfg.oauthClientId,
+        clientSecret: cfg.oauthClientSecret,
+        refreshToken: cfg.oauthTokens.refresh_token,
+        accessToken: cfg.oauthTokens.access_token
+      }
     });
 
     await transporter.sendMail({
-      from: `"Ruralift CRM" <${cfg.gmailUser}>`,
+      from: `"Ruralift" <${cfg.gmailUser}>`,
       to: toEmail,
       subject,
       text: body,
       attachments
     });
 
-    res.json({ ok: true, attached: attachments.length });
+    res.json({ ok: true, attached: attachments.length, from: cfg.gmailUser });
   } catch (e) {
     console.error('Email send error:', e.message);
     res.status(500).json({ error: e.message || 'Failed to send email' });
