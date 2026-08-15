@@ -1118,19 +1118,6 @@ async function sendEmailToCustomer() {
   if (!currentCustomer) { toast('No customer selected'); return; }
   const c = currentCustomer;
 
-  // Check Gmail is configured
-  const cfgCheck = await fetch('/api/email-config').then(r => r.json());
-  if (!cfgCheck.isConnected) {
-    toast('⚠️ Gmail not connected — opening settings…');
-    setTimeout(() => openEmailSettings(), 600);
-    return;
-  }
-
-  const toEmail = c.email || c.mobile + '@sms.example.com';
-  // Prompt for recipient email
-  const recipient = prompt(`Send email to (customer's Gmail):`, c.email || '');
-  if (!recipient || !recipient.includes('@')) { toast('Valid email required'); return; }
-
   const customerName = c.name || 'Valued Customer';
   const loanAmt = c.loanAmt ? 'रु. ' + Number(c.loanAmt).toLocaleString('en-IN') : 'N/A';
   const successFeeStr = c.successFee ? 'रु. ' + Number(c.successFee).toLocaleString('en-IN') : 'N/A';
@@ -1186,49 +1173,101 @@ controlcenter@ruralift.com
 This is an electronically generated email. This email, along with its attachments, serves as a digital record of your consent and verification with Ruralift.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
-  const btn = document.getElementById('send-email-btn');
-  const resetBtn = () => { if (btn) { btn.disabled = false; btn.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> 📧 Send Email to Customer'; } };
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sending…'; }
-  toast('📤 Sending email with attachments…');
+  // ── Show compose popup ──────────────────────────────────────────
+  const overlay = document.createElement('div');
+  overlay.id = 'compose-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:99999;display:flex;align-items:center;justify-content:center;';
 
-  // Timeout: auto-reset button after 60s if request hangs
-  const timeoutId = setTimeout(() => {
-    resetBtn();
-    toast('❌ Request timed out. Check Gmail connection and try again.');
-  }, 90000);
+  // Get downloaded file names for attachment reminder
+  const hasAgreement = !!c.agreementPdf;
+  const hasReceipt   = !!c.receiptPdf;
 
+  // Fetch latest video filename if any
+  let videoFilename = '';
   try {
-    const controller = new AbortController();
-    const result = await fetch('/api/send-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ customerId: c.id, toEmail: recipient, subject, body }),
-      signal: controller.signal
-    });
-    const data = await result.json();
-    if (!result.ok) throw new Error((data.code ? '[' + data.code + '] ' : '') + (data.error || 'Send failed'));
-    toast(`✅ Email sent! (${data.attached} file${data.attached !== 1 ? 's' : ''} attached automatically)`);
-  } catch (e) {
-    const errMsg = e.name === 'AbortError' ? 'Request cancelled (timeout)' : (e.message || 'Unknown error');
-    // Show copyable error popup
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;';
-    overlay.innerHTML = `
-      <div style="background:#fff;border-radius:14px;padding:28px;width:500px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.3);">
-        <div style="font-size:17px;font-weight:700;color:#dc2626;margin-bottom:10px;">❌ Email Failed — Error Details</div>
-        <p style="font-size:13px;color:#6b7280;margin:0 0 10px;">Copy the error below and share it to get help:</p>
-        <textarea id="err-box" readonly style="width:100%;height:100px;font-family:monospace;font-size:12px;padding:10px;border:1px solid #fca5a5;border-radius:8px;background:#fff1f2;color:#991b1b;resize:none;box-sizing:border-box;">${errMsg}</textarea>
-        <div style="display:flex;gap:10px;margin-top:14px;">
-          <button onclick="(()=>{const t=document.getElementById('err-box');t.select();document.execCommand('copy');this.textContent='✅ Copied!';setTimeout(()=>this.textContent='📋 Copy Error',2000);})()" style="flex:1;padding:9px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">📋 Copy Error</button>
-          <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:9px;background:#f1f5f9;color:#374151;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">Close</button>
+    const vr = await fetch(`/api/video/${c.id}/list`).then(r => r.json());
+    if (vr.videos && vr.videos.length > 0) videoFilename = vr.videos[0].filename;
+  } catch(_) {}
+
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:16px;width:640px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.3);display:flex;flex-direction:column;">
+
+      <!-- Header -->
+      <div style="background:#1d4ed8;color:#fff;padding:16px 20px;border-radius:16px 16px 0 0;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:16px;font-weight:700;">✉️ Compose Email — ${customerName}</span>
+        <button onclick="document.getElementById('compose-overlay').remove()" style="background:rgba(255,255,255,0.2);border:none;color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:18px;">✕</button>
+      </div>
+
+      <div style="padding:20px;display:flex;flex-direction:column;gap:14px;">
+
+        <!-- To -->
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">To (Customer Email)</label>
+          <input id="compose-to" type="email" value="${c.email || ''}" placeholder="customer@gmail.com"
+            style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;">
         </div>
-      </div>`;
-    document.body.appendChild(overlay);
-    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-  } finally {
-    clearTimeout(timeoutId);
-    resetBtn();
-  }
+
+        <!-- Subject -->
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Subject</label>
+          <input id="compose-subject" type="text" value="${subject.replace(/"/g,'&quot;')}"
+            style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;">
+        </div>
+
+        <!-- Body -->
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Email Body</label>
+          <textarea id="compose-body" rows="12"
+            style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;font-family:monospace;resize:vertical;box-sizing:border-box;">${body.replace(/</g,'&lt;')}</textarea>
+        </div>
+
+        <!-- Attachment checklist -->
+        <div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px;">
+          <div style="font-size:12px;font-weight:700;color:#1d4ed8;margin-bottom:8px;">📎 Attach these files manually in Gmail:</div>
+          <div style="font-size:13px;color:#1e40af;display:flex;flex-direction:column;gap:6px;">
+            <div>${hasReceipt   ? '✅' : '⚠️'} <b>Consultancy Slip</b> — ${hasReceipt   ? '<a href="/api/receipt-pdf/'+c.id+'" target="_blank" style="color:#1d4ed8;">Download PDF</a>' : 'Not uploaded yet'}</div>
+            <div>${hasAgreement ? '✅' : '⚠️'} <b>Consultancy Agreement</b> — ${hasAgreement ? '<a href="/api/agreement-pdf/'+c.id+'" target="_blank" style="color:#1d4ed8;">Download PDF</a>' : 'Not uploaded yet'}</div>
+            <div>${videoFilename ? '✅' : '⚠️'} <b>Video Session</b> — ${videoFilename ? '<a href="/api/video/download/'+videoFilename+'" target="_blank" style="color:#1d4ed8;">Download Video</a>' : 'No video recorded yet'}</div>
+          </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div style="display:flex;gap:10px;">
+          <button onclick="openInGmail()" style="flex:2;padding:12px;background:#1d4ed8;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">
+            🚀 Open in Gmail (New Tab)
+          </button>
+          <button onclick="copyEmailBody()" style="flex:1;padding:12px;background:#f1f5f9;color:#374151;border:1px solid #d1d5db;border-radius:10px;font-size:13px;cursor:pointer;">
+            📋 Copy Body
+          </button>
+          <button onclick="document.getElementById('compose-overlay').remove()" style="flex:1;padding:12px;background:#fff;color:#6b7280;border:1px solid #e5e7eb;border-radius:10px;font-size:13px;cursor:pointer;">
+            Cancel
+          </button>
+        </div>
+        <p style="font-size:11px;color:#9ca3af;margin:0;text-align:center;">Gmail will open pre-filled. Attach the files above, then hit Send.</p>
+      </div>
+    </div>`;
+
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+function openInGmail() {
+  const to      = document.getElementById('compose-to').value.trim();
+  const subject = document.getElementById('compose-subject').value.trim();
+  const body    = document.getElementById('compose-body').value;
+  if (!to || !to.includes('@')) { alert('Please enter a valid recipient email first.'); return; }
+  const url = 'https://mail.google.com/mail/?view=cm&fs=1'
+    + '&to='      + encodeURIComponent(to)
+    + '&su='      + encodeURIComponent(subject)
+    + '&body='    + encodeURIComponent(body);
+  window.open(url, '_blank', 'width=900,height=700,resizable=yes,scrollbars=yes');
+}
+
+function copyEmailBody() {
+  const ta = document.getElementById('compose-body');
+  ta.select();
+  document.execCommand('copy');
+  toast('📋 Email body copied!');
 }
 
 // ===== EMAIL SETTINGS MODAL =====
