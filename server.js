@@ -2,10 +2,12 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const STATE_FILE = path.join(__dirname, 'state.json');
+const CONFIG_FILE = path.join(__dirname, 'config.json');
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 
 // Ensure uploads directory exists
@@ -469,6 +471,111 @@ app.delete('/api/video/:customerId/:filename', (req, res) => {
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: e.message || 'Delete failed' });
+  }
+});
+
+// ===== EMAIL CONFIG =====
+function loadConfig() {
+  if (!fs.existsSync(CONFIG_FILE)) return {};
+  try { return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')); } catch { return {}; }
+}
+function saveConfig(cfg) {
+  fs.writeFileSync(CONFIG_FILE, JSON.stringify(cfg, null, 2));
+}
+
+// GET /api/email-config — return config (mask password)
+app.get('/api/email-config', (req, res) => {
+  const cfg = loadConfig();
+  res.json({ gmailUser: cfg.gmailUser || '', hasPassword: !!cfg.gmailPass });
+});
+
+// POST /api/email-config — save Gmail credentials
+app.post('/api/email-config', (req, res) => {
+  const { gmailUser, gmailPass } = req.body;
+  if (!gmailUser || !gmailPass) return res.status(400).json({ error: 'Email and App Password required' });
+  const cfg = loadConfig();
+  cfg.gmailUser = gmailUser.trim();
+  cfg.gmailPass = gmailPass.trim();
+  saveConfig(cfg);
+  res.json({ ok: true });
+});
+
+// POST /api/send-email — send email with auto-attached PDFs and video
+app.post('/api/send-email', async (req, res) => {
+  const cfg = loadConfig();
+  if (!cfg.gmailUser || !cfg.gmailPass) {
+    return res.status(400).json({ error: 'Gmail not configured. Please set up email settings first.' });
+  }
+
+  const { customerId, toEmail, subject, body } = req.body;
+  if (!customerId || !toEmail) {
+    return res.status(400).json({ error: 'Customer ID and recipient email are required.' });
+  }
+
+  const state = loadState();
+  const c = state.customers.find(x => x.id === customerId);
+  if (!c) return res.status(404).json({ error: 'Customer not found' });
+
+  // Build attachments list
+  const attachments = [];
+
+  if (c.agreementPdf) {
+    const p = path.join(UPLOADS_DIR, c.agreementPdf);
+    if (fs.existsSync(p)) {
+      attachments.push({
+        filename: `Signed_Agreement_${(c.name || 'Customer').replace(/\s+/g, '_')}.pdf`,
+        path: p,
+        contentType: 'application/pdf'
+      });
+    }
+  }
+
+  if (c.receiptPdf) {
+    const p = path.join(UPLOADS_DIR, c.receiptPdf);
+    if (fs.existsSync(p)) {
+      attachments.push({
+        filename: `Consultancy_Receipt_${(c.name || 'Customer').replace(/\s+/g, '_')}.pdf`,
+        path: p,
+        contentType: 'application/pdf'
+      });
+    }
+  }
+
+  // Attach latest video if present
+  if (fs.existsSync(VIDEO_DIR)) {
+    const prefix = 'video-' + customerId + '-';
+    const videos = fs.readdirSync(VIDEO_DIR)
+      .filter(f => f.startsWith(prefix) && f.endsWith('.webm'))
+      .sort().reverse();
+    if (videos.length > 0) {
+      attachments.push({
+        filename: `VideoVerification_${(c.name || 'Customer').replace(/\s+/g, '_')}.webm`,
+        path: path.join(VIDEO_DIR, videos[0]),
+        contentType: 'video/webm'
+      });
+    }
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 587,
+      secure: false,
+      auth: { user: cfg.gmailUser, pass: cfg.gmailPass }
+    });
+
+    await transporter.sendMail({
+      from: `"Ruralift CRM" <${cfg.gmailUser}>`,
+      to: toEmail,
+      subject,
+      text: body,
+      attachments
+    });
+
+    res.json({ ok: true, attached: attachments.length });
+  } catch (e) {
+    console.error('Email send error:', e.message);
+    res.status(500).json({ error: e.message || 'Failed to send email' });
   }
 });
 
