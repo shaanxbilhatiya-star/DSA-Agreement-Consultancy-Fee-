@@ -1,6 +1,27 @@
 {
   "customers": [
     {
+      "id": "1786800000002",
+      "createdAt": "2026-08-15T12:00:00.000Z",
+      "name": "Mohan Lal Yadav",
+      "mobile": "9301456789",
+      "aadhaar": "4567 8901 2345",
+      "date": "2026-08-15",
+      "place": "Mandla",
+      "address": "Village Ghughari, Post Nainpur, Tehsil Nainpur, Mandla, MP - 481776",
+      "receiptNo": "RL-2026-002",
+      "loanAmt": "750000",
+      "loanAmtWords": "सात लाख पचास हजार मात्र",
+      "successFee": "22500",
+      "successFeeWords": "बाईस हजार पाँच सौ मात्र",
+      "chequeNo": "009912",
+      "chequeBankBranch": "Punjab National Bank, Nainpur Branch",
+      "chequeHolder": "Mohan Lal Yadav",
+      "chequeAmt": "22500",
+      "chequeDate": "2026-12-15",
+      "notes": "Test customer 2 — Agricultural land loan. Kisan credit card also applicable."
+    },
+    {
       "id": "1782500000001",
       "createdAt": "2026-08-15T10:30:00.000Z",
       "name": "Sunita Devi Patel",
@@ -10,8 +31,6 @@
       "place": "Mandla",
       "address": "Ward 12, Gandhi Nagar, Mandla, Madhya Pradesh - 481661",
       "receiptNo": "RL-2026-001",
-      "payMode": "UPI",
-      "utr": "UPI20260815001",
       "loanAmt": "300000",
       "loanAmtWords": "तीन लाख मात्र",
       "successFee": "9000",
@@ -21,7 +40,7 @@
       "chequeHolder": "Sunita Devi Patel",
       "chequeAmt": "9000",
       "chequeDate": "2026-11-15",
-      "notes": "Test customer added for system verification. Loan purpose: Home renovation."
+      "notes": "Test customer — Home renovation loan."
     },
     {
       "id": "1781242858352",
@@ -33,8 +52,6 @@
       "place": "Mandla",
       "address": "Ward 5, Mandla, MP",
       "receiptNo": "RL-2025-001",
-      "payMode": "UPI",
-      "utr": "UTR12345",
       "loanAmt": "500000",
       "loanAmtWords": "पाँच लाख मात्र",
       "successFee": "15000",
