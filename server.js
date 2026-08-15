@@ -20,6 +20,13 @@ const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 // Ensure directories exist
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
+// Seed state.json from repo bundle if volume is fresh (first deploy)
+const SEED_FILE = path.join(__dirname, 'seed-state.json');
+if (!fs.existsSync(STATE_FILE) && fs.existsSync(SEED_FILE)) {
+  fs.copyFileSync(SEED_FILE, STATE_FILE);
+  console.log('  Seeded state.json from seed-state.json');
+}
+
 // Simple multipart/form-data parser for single PDF file upload
 function parseMultipart(req) {
   return new Promise((resolve, reject) => {

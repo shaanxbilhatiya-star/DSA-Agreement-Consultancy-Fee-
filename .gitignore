@@ -3,4 +3,3 @@ node_modules/
 uploads/*
 !uploads/.gitkeep
 config.json
-state.json
