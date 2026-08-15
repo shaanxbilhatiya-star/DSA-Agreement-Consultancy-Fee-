@@ -1090,7 +1090,7 @@ async function sendEmailToCustomer() {
   const fromEmail = 'controlcenter@ruralift.com';
   const customerName = c.name || 'Valued Customer';
   const loanAmt = c.loanAmt ? 'रु. ' + Number(c.loanAmt).toLocaleString('en-IN') : 'N/A';
-  const successFeeStr = c.successFee ? 'रु. ' + Number(c.successFee).toLocaleString('en-IN') + ' (Paid)' : '(Paid)';
+  const successFeeStr = c.successFee ? 'रु. ' + Number(c.successFee).toLocaleString('en-IN') : 'N/A';
   const receiptNo = c.receiptNo || 'N/A';
   const dateStr = c.date ? fmtDate(c.date) : new Date().toLocaleDateString('hi-IN');
 
