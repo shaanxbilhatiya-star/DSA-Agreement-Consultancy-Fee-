@@ -922,7 +922,7 @@ function rowHtml(c, showLoan = false, hasVideo = false) {
   const receiptBadge = c.receiptPdf ? `<span class="badge-pdf"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Receipt</span> ` : '';
   const videoBadge = hasVideo ? `<span class="badge-video"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>Video</span> ` : '';
   return `<tr>
-    <td><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start"><div style="display:flex;gap:4px;flex-wrap:wrap">${pdfBadge}${receiptBadge}${videoBadge}</div><strong>${c.name || '—'}</strong></div></td>
+    <td><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start"><strong>${c.name || '—'}</strong><div style="display:flex;gap:4px;flex-wrap:wrap">${pdfBadge}${receiptBadge}${videoBadge}</div></div></td>
     <td>${c.mobile || '—'}</td>
     <td>${c.aadhaar || '—'}</td>
     ${loan}
