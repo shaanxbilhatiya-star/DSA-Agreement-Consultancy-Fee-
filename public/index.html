@@ -213,11 +213,7 @@ textarea { resize: vertical; min-height: 70px; }
     <img src="logo.jpg" alt="Ruralift">
   </div>
   <nav>
-    <a onclick="showView('dashboard')" class="active" id="nav-dashboard">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-      Dashboard
-    </a>
-    <a onclick="showView('customers')" id="nav-customers">
+    <a onclick="showView('customers')" class="active" id="nav-customers">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       Customers
     </a>
@@ -245,8 +241,8 @@ textarea { resize: vertical; min-height: 70px; }
 
   <div id="content">
 
-    <!-- DASHBOARD VIEW -->
-    <div class="view active" id="view-dashboard">
+    <!-- CUSTOMERS VIEW (merged dashboard + customers) -->
+    <div class="view active" id="view-customers">
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon purple">
@@ -277,23 +273,6 @@ textarea { resize: vertical; min-height: 70px; }
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-header">
-          <h2>Recent Customers</h2>
-          <button class="btn btn-primary btn-sm" onclick="openAddModal()">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            Add New
-          </button>
-        </div>
-        <table>
-          <thead><tr><th>Name</th><th>Mobile</th><th>Aadhaar</th><th>Date</th><th>Receipt No.</th><th>Actions</th></tr></thead>
-          <tbody id="dashboard-table"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- CUSTOMERS VIEW -->
-    <div class="view" id="view-customers">
       <div class="card">
         <div class="card-header">
           <h2>All Customers <span id="customer-count" class="badge badge-purple" style="margin-left:8px">0</span></h2>
@@ -632,9 +611,8 @@ function showView(name) {
   document.querySelectorAll('#sidebar nav a').forEach(a => a.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
   document.getElementById('nav-' + name)?.classList.add('active');
-  const titles = { dashboard: 'Dashboard', customers: 'All Customers', detail: 'Customer Detail' };
+  const titles = { customers: 'Customers', detail: 'Customer Detail' };
   document.getElementById('page-title').textContent = titles[name] || name;
-  if (name === 'dashboard') loadDashboard();
   if (name === 'customers') loadCustomers();
 }
 
@@ -648,12 +626,7 @@ async function api(method, path, body) {
 
 // ===== SEARCH =====
 function handleSearch(q) {
-  if (q.length > 0) {
-    showView('customers');
-    loadCustomers(q);
-  } else {
-    loadCustomers('');
-  }
+  loadCustomers(q);
 }
 
 // ===== DATE HELPERS =====
@@ -668,33 +641,27 @@ function fmtDateDoc(d) {
   return `${day} / ${m} / ${y}`;
 }
 
-// ===== DASHBOARD =====
-async function loadDashboard() {
-  const customers = await api('GET', '/customers');
-  allCustomers = customers;
-  const now = new Date();
-  const thisMonth = customers.filter(c => {
-    const d = new Date(c.createdAt);
-    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-  });
-  const today = customers.filter(c => {
-    const d = new Date(c.createdAt);
-    return d.toDateString() === now.toDateString();
-  });
-  document.getElementById('stat-total').textContent = customers.length;
-  document.getElementById('stat-month').textContent = thisMonth.length;
-  document.getElementById('stat-today').textContent = today.length;
-
-  const tbody = document.getElementById('dashboard-table');
-  const recent = customers.slice(0, 10);
-  tbody.innerHTML = recent.length ? recent.map(c => rowHtml(c)).join('') : emptyRow(6);
-}
-
-// ===== CUSTOMERS =====
+// ===== CUSTOMERS (stats + searchable full list, merged view) =====
 async function loadCustomers(q = '') {
   const url = q ? `/customers?q=${encodeURIComponent(q)}` : '/customers';
   const customers = await api('GET', url);
   allCustomers = customers;
+
+  // Stats always reflect the full customer base, not the filtered search result
+  const allForStats = q ? await api('GET', '/customers') : customers;
+  const now = new Date();
+  const thisMonth = allForStats.filter(c => {
+    const d = new Date(c.createdAt);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const today = allForStats.filter(c => {
+    const d = new Date(c.createdAt);
+    return d.toDateString() === now.toDateString();
+  });
+  document.getElementById('stat-total').textContent = allForStats.length;
+  document.getElementById('stat-month').textContent = thisMonth.length;
+  document.getElementById('stat-today').textContent = today.length;
+
   document.getElementById('customer-count').textContent = customers.length;
   const tbody = document.getElementById('customers-table');
   tbody.innerHTML = customers.length ? customers.map(c => rowHtml(c, true)).join('') : emptyRow(7);
@@ -920,7 +887,6 @@ async function deleteCustomerFromList(id) {
   if (!confirm('Delete this customer? This cannot be undone.')) return;
   await api('DELETE', '/customers/' + id);
   toast('Customer deleted');
-  loadDashboard();
   loadCustomers();
 }
 
@@ -1263,7 +1229,7 @@ document.getElementById('modal').addEventListener('click', function(e) {
 });
 
 // ===== INIT =====
-loadDashboard();
+loadCustomers();
 
 
   
