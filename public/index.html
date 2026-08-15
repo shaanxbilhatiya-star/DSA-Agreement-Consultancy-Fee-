@@ -1103,7 +1103,73 @@ loadDashboard();
   let recordedChunks = [];
   let recordedBlob = null;
 
-  async function openVideoModal() {
+  async function startCamera() {
+    const preview = document.getElementById('video-preview');
+    const statusEl = document.getElementById('video-save-status');
+
+    // Stop any existing tracks first
+    if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+
+    // Must be HTTPS or localhost for getUserMedia to work
+    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if (!isSecure) {
+      statusEl.textContent = '❌ कैमरा केवल HTTPS पर काम करता है। Railway पर HTTPS URL उपयोग करें।';
+      statusEl.style.color = 'red';
+      toast('HTTPS जरूरी है — http:// URL से कैमरा नहीं खुलेगा');
+      return;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      statusEl.textContent = '❌ यह ब्राउज़र कैमरा सपोर्ट नहीं करता।';
+      statusEl.style.color = 'red';
+      return;
+    }
+
+    // Check permission state if API available
+    if (navigator.permissions && navigator.permissions.query) {
+      try {
+        const perm = await navigator.permissions.query({ name: 'camera' });
+        if (perm.state === 'denied') {
+          statusEl.textContent = '❌ कैमरा परमिशन ब्राउज़र में ब्लॉक है। ब्राउज़र एड्रेस बार में 🔒 पर क्लिक करके Camera को Allow करें, फिर पेज रीलोड करें।';
+          statusEl.style.color = 'red';
+          toast('Camera blocked — ब्राउज़र सेटिंग में Allow करें');
+          return;
+        }
+      } catch(e) { /* permissions API not supported, continue */ }
+    }
+
+    try {
+      // Try with both video+audio first
+      videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true });
+      preview.srcObject = videoStream;
+      statusEl.textContent = '';
+    } catch(e) {
+      if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+        statusEl.innerHTML = '❌ <b>परमिशन नामंज़ूर।</b> ब्राउज़र एड्रेस बार में 🔒 → Camera → Allow करें, फिर पेज रीलोड करें।';
+        statusEl.style.color = 'red';
+        toast('Camera permission denied — browser settings में Allow करें');
+      } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
+        statusEl.textContent = '❌ कोई कैमरा नहीं मिला। कैमरा कनेक्ट करें।';
+        statusEl.style.color = 'red';
+      } else if (e.name === 'NotReadableError' || e.name === 'TrackStartError') {
+        // Camera in use by another app — try video only without audio
+        try {
+          videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+          preview.srcObject = videoStream;
+          statusEl.textContent = '⚠️ माइक्रोफ़ोन उपलब्ध नहीं — केवल वीडियो रिकॉर्ड होगा।';
+          statusEl.style.color = 'orange';
+        } catch(e2) {
+          statusEl.textContent = '❌ कैमरा किसी और ऐप ने लॉक किया है। दूसरे ऐप बंद करें और रीलोड करें।';
+          statusEl.style.color = 'red';
+        }
+      } else {
+        statusEl.textContent = '❌ कैमरा त्रुटि: ' + e.name + ' — ' + e.message;
+        statusEl.style.color = 'red';
+      }
+    }
+  }
+
+    async function openVideoModal() {
     if (!currentCustomer) return;
     document.getElementById('video-modal').classList.add('open');
     // Reset UI
@@ -1114,12 +1180,7 @@ loadDashboard();
     recordedChunks = [];
 
     // Start camera
-    try {
-      videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      document.getElementById('video-preview').srcObject = videoStream;
-    } catch(e) {
-      toast('कैमरा एक्सेस नहीं मिला: ' + e.message);
-    }
+    await startCamera();
 
     // Load script
     loadVideoScript(currentCustomer.id);
@@ -1170,14 +1231,7 @@ loadDashboard();
     recordedBlob = null; recordedChunks = [];
     document.getElementById('video-save-status').textContent = '';
     // Restart preview stream
-    if (!videoStream || videoStream.getTracks().some(t => t.readyState === 'ended')) {
-      navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(s => {
-        videoStream = s;
-        document.getElementById('video-preview').srcObject = s;
-      }).catch(e => toast('कैमरा: ' + e.message));
-    } else {
-      document.getElementById('video-preview').srcObject = videoStream;
-    }
+    await startCamera();
     showVideoBtn('start');
   }
 
