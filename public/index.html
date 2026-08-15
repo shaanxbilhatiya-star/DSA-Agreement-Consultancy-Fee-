@@ -1120,8 +1120,8 @@ async function sendEmailToCustomer() {
 
   // Check Gmail is configured
   const cfgCheck = await fetch('/api/email-config').then(r => r.json());
-  if (!cfgCheck.gmailUser || !cfgCheck.hasPassword) {
-    toast('⚠️ Gmail not set up — opening settings…');
+  if (!cfgCheck.isConnected) {
+    toast('⚠️ Gmail not connected — opening settings…');
     setTimeout(() => openEmailSettings(), 600);
     return;
   }
@@ -1209,31 +1209,54 @@ This is an electronically generated email. This email, along with its attachment
 // ===== EMAIL SETTINGS MODAL =====
 async function openEmailSettings() {
   const cfg = await fetch('/api/email-config').then(r => r.json());
+  const connectedBadge = cfg.isConnected
+    ? `<div style="background:#dcfce7;border:1px solid #86efac;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#15803d;">
+        ✅ Gmail Connected: <strong>${cfg.gmailUser}</strong>
+       </div>`
+    : `<div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#92400e;">
+        ⚠️ Gmail not connected yet. Enter credentials and click Connect.
+       </div>`;
+
   const html = `
     <div id="email-settings-overlay" style="
       position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;
       display:flex;align-items:center;justify-content:center;">
-      <div style="background:#fff;border-radius:14px;padding:32px;width:420px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.25);">
-        <h3 style="margin:0 0 6px;font-size:18px;color:#1e293b;">⚙️ Gmail Settings</h3>
-        <p style="margin:0 0 20px;font-size:13px;color:#64748b;">
-          Email files ko automatically attach karne ke liye Gmail App Password chahiye.<br>
-          <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:#7c3aed;">
-            App Password kaise banayein? →
-          </a>
-        </p>
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Gmail Address</label>
-        <input id="es-user" type="email" value="${cfg.gmailUser || ''}" placeholder="controlcenter@ruralift.com"
-          style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-bottom:14px;box-sizing:border-box;">
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">
-          Gmail App Password <span style="font-weight:400;color:#9ca3af;">(16-character, no spaces)</span>
-        </label>
-        <input id="es-pass" type="password" placeholder="${cfg.hasPassword ? '●●●● saved — enter new to change ●●●●' : 'xxxx xxxx xxxx xxxx'}"
-          style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-bottom:20px;box-sizing:border-box;">
-        <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <div style="background:#fff;border-radius:14px;padding:32px;width:480px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.25);max-height:90vh;overflow-y:auto;">
+        <h3 style="margin:0 0 4px;font-size:18px;color:#1e293b;">⚙️ Gmail OAuth2 Setup</h3>
+        <p style="margin:0 0 14px;font-size:12px;color:#64748b;">One-time setup. Emails will send from your company Gmail directly.</p>
+        ${connectedBadge}
+
+        <details style="margin-bottom:18px;border:1px solid #e2e8f0;border-radius:8px;padding:12px;">
+          <summary style="cursor:pointer;font-weight:600;font-size:13px;color:#374151;">📋 How to get Client ID & Secret (click to expand)</summary>
+          <ol style="font-size:12px;color:#475569;margin:10px 0 0 0;padding-left:18px;line-height:1.8;">
+            <li>Go to <a href="https://console.cloud.google.com" target="_blank" style="color:#7c3aed;">console.cloud.google.com</a></li>
+            <li>New Project → name it "Ruralift CRM"</li>
+            <li>APIs & Services → Enable APIs → search <strong>"Gmail API"</strong> → Enable</li>
+            <li>APIs & Services → Credentials → Create Credentials → <strong>OAuth 2.0 Client ID</strong></li>
+            <li>Application type: <strong>Web application</strong></li>
+            <li>Authorized redirect URIs: add <code style="background:#f1f5f9;padding:2px 5px;border-radius:4px;">http://localhost:3000/oauth2callback</code></li>
+            <li>Copy Client ID and Client Secret below</li>
+            <li>OAuth consent screen → Add your email as test user</li>
+          </ol>
+        </details>
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Client ID</label>
+        <input id="es-clientid" type="text" value="${cfg.hasClientId ? '••••••• (saved)' : ''}"
+          placeholder="1234567890-abc...apps.googleusercontent.com"
+          style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-bottom:12px;box-sizing:border-box;">
+
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Client Secret</label>
+        <input id="es-secret" type="password" value=""
+          placeholder="${cfg.hasClientSecret ? '••••••• (saved — enter to change)' : 'GOCSPX-...'}"
+          style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;margin-bottom:20px;box-sizing:border-box;">
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;">
           <button onclick="document.getElementById('email-settings-overlay').remove()"
             style="padding:9px 20px;border:1px solid #d1d5db;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;">Cancel</button>
           <button onclick="saveEmailSettings()"
-            style="padding:9px 20px;border:none;border-radius:8px;background:#7c3aed;color:#fff;cursor:pointer;font-size:14px;font-weight:600;">Save Settings</button>
+            style="padding:9px 20px;border:none;border-radius:8px;background:#64748b;color:#fff;cursor:pointer;font-size:14px;font-weight:600;">💾 Save Credentials</button>
+          <button onclick="connectGmail()"
+            style="padding:9px 20px;border:none;border-radius:8px;background:#16a34a;color:#fff;cursor:pointer;font-size:14px;font-weight:600;">🔗 Connect Gmail →</button>
         </div>
       </div>
     </div>`;
@@ -1241,22 +1264,25 @@ async function openEmailSettings() {
 }
 
 async function saveEmailSettings() {
-  const user = document.getElementById('es-user').value.trim();
-  const pass = document.getElementById('es-pass').value.trim();
-  if (!user) { alert('Gmail address required'); return; }
-  const body = { gmailUser: user };
-  if (pass) body.gmailPass = pass.replace(/\s/g, '');
+  const clientId = document.getElementById('es-clientid').value.trim();
+  const secret   = document.getElementById('es-secret').value.trim();
+  if (!clientId || clientId.startsWith('•')) { alert('Client ID required'); return; }
+  if (!secret) { alert('Client Secret required'); return; }
   const r = await fetch('/api/email-config', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
+    body: JSON.stringify({ oauthClientId: clientId, oauthClientSecret: secret })
   });
   if (r.ok) {
-    document.getElementById('email-settings-overlay').remove();
-    toast('✅ Gmail settings saved!');
+    toast('✅ Credentials saved! Now click "Connect Gmail"');
   } else {
-    const d = await r.json();
-    alert('Error: ' + (d.error || 'Save failed'));
+    const d = await r.json(); alert('Error: ' + (d.error || 'Save failed'));
   }
+}
+
+function connectGmail() {
+  document.getElementById('email-settings-overlay').remove();
+  toast('🔗 Opening Google authorization…');
+  window.open('/api/gmail-auth', '_blank', 'width=500,height=650');
 }
 // ===== PRINT =====
 
