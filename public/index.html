@@ -319,7 +319,6 @@ textarea { resize: vertical; min-height: 70px; }
         <div class="detail-actions">
           <button class="btn btn-outline btn-sm" onclick="showView('customers')">← Back</button>
           <button class="btn btn-outline btn-sm" id="detail-edit-btn">Edit</button>
-          <button class="btn btn-video btn-sm" id="video-record-btn" onclick="openVideoModal()">🎥 वीडियो रिकॉर्ड करें</button>
           <button class="btn btn-danger btn-sm" style="margin-left:auto" id="detail-delete-btn">Delete</button>
         </div>
       </div>
@@ -332,9 +331,24 @@ textarea { resize: vertical; min-height: 70px; }
       </div>
 
       <div class="card">
-        <div class="card-header"><h2>Print Documents</h2></div>
+        <div class="card-header"><h2>📋 Print &amp; Record Verification Session</h2></div>
         <div style="padding:20px">
-          <p style="font-size:13px;color:var(--gray-600);margin-bottom:14px">All fields are pre-filled. Physical signature & thumb impression sections are left blank for manual signing.</p>
+          <!-- Process instruction box -->
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+            <div style="font-size:13px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📌 Customer Session Process — Follow in Order</div>
+            <ol style="font-size:13px;color:#1e40af;line-height:2;padding-left:18px">
+              <li>Print <b>Consultation Fee Receipt</b> and <b>Loan Agreement + PDC</b> → get customer signatures &amp; thumb impression.</li>
+              <li>Record <b>Video Verification Session</b> with the customer — use the button below.</li>
+              <li>Scan and upload the signed documents using the <b>Scan Docs</b> page.</li>
+              <li>Finally, <b>Send Email</b> to the customer (bottom of this page) — email must include:
+                <ul style="padding-left:16px;list-style:disc">
+                  <li>Consultancy Slip (signed receipt)</li>
+                  <li>Consultancy Agreement (signed agreement)</li>
+                  <li>Recorded Video Session file</li>
+                </ul>
+              </li>
+            </ol>
+          </div>
           <div class="print-buttons">
             <button class="btn btn-primary" id="print-receipt-btn">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2z"/></svg>
@@ -344,9 +358,9 @@ textarea { resize: vertical; min-height: 70px; }
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               Print Loan Agreement + PDC Receipt
             </button>
-            <button class="btn btn-outline" id="send-email-btn" onclick="sendEmailToCustomer()">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-              Send Email
+            <button class="btn btn-video" id="video-record-btn" onclick="openVideoModal()">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M4 6h8a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"/></svg>
+              🎥 Record Video Verification
             </button>
           </div>
         </div>
@@ -385,6 +399,50 @@ textarea { resize: vertical; min-height: 70px; }
             </button>
           </div>
           <div id="receipt-upload-status" class="upload-status" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- RECORDED VIDEO SESSIONS -->
+      <div class="card" style="margin-top:16px">
+        <div class="card-header">
+          <h2>🎥 Recorded Video Sessions</h2>
+          <button class="btn btn-outline btn-sm" onclick="refreshDetailVideoList()">↻ Refresh</button>
+        </div>
+        <div style="padding:20px">
+          <p style="font-size:13px;color:var(--gray-600);margin-bottom:14px">All video verification sessions recorded for this customer. Download the file to attach in the customer email.</p>
+          <div id="detail-video-list">
+            <div style="font-size:13px;color:var(--gray-400)">Loading videos…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEND CUSTOMER EMAIL -->
+      <div class="card" style="margin-top:16px;margin-bottom:8px;border:2px solid #bfdbfe;background:#f0f7ff">
+        <div class="card-header" style="background:#dbeafe;border-bottom:1px solid #bfdbfe">
+          <h2 style="color:#1d4ed8">✉️ Send Customer Email</h2>
+        </div>
+        <div style="padding:20px">
+          <div style="background:#fff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;margin-bottom:16px">
+            <div style="font-size:13px;font-weight:700;color:#1d4ed8;margin-bottom:8px">📧 Email must include all three items:</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#1e40af">
+                <span style="background:#dbeafe;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">1</span>
+                <span>📄 <b>Consultancy Slip</b> — Signed consultation fee receipt (upload above and attach)</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#1e40af">
+                <span style="background:#dbeafe;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">2</span>
+                <span>📋 <b>Consultancy Agreement</b> — Signed loan agreement PDF (upload above and attach)</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;font-size:13px;color:#1e40af">
+                <span style="background:#dbeafe;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">3</span>
+                <span>🎥 <b>Recorded Video Session</b> — Download from the section above and attach to the email</span>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-primary" id="send-email-btn" onclick="sendEmailToCustomer()" style="background:#1d4ed8;font-size:15px;padding:10px 24px">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            Send Email to Customer
+          </button>
         </div>
       </div>
     </div>
@@ -704,6 +762,34 @@ async function viewCustomer(id) {
   document.getElementById('print-receipt-btn').onclick = () => printReceipt(c);
   document.getElementById('print-agreement-btn').onclick = () => printAgreement(c);
   setupUploadUI(c);
+  loadDetailVideoList(id, c.name);
+}
+
+async function loadDetailVideoList(customerId, customerName) {
+  const listEl = document.getElementById('detail-video-list');
+  if (!listEl) return;
+  listEl.innerHTML = '<div style="font-size:13px;color:var(--gray-400)">Loading…</div>';
+  try {
+    const res = await fetch('/api/video/' + customerId + '/list');
+    const data = await res.json();
+    if (!data.videos || data.videos.length === 0) {
+      listEl.innerHTML = '<div style="font-size:13px;color:var(--gray-400);padding:8px 0">No video sessions recorded yet. Use the <b>Record Video Verification</b> button above.</div>';
+      return;
+    }
+    const safeCustomerName = (customerName || 'Customer').replace(/\s+/g, '_');
+    listEl.innerHTML = data.videos.map((v, i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:600;color:#1e293b;flex:1">🎥 Session ${i+1} — ${v.date} &nbsp;<span style="font-size:12px;color:var(--gray-400)">${v.size}</span></span>
+        <a class="btn btn-outline btn-sm" href="/api/video/file/${encodeURIComponent(v.filename)}" target="_blank">▶ Play</a>
+        <a class="btn btn-green btn-sm" href="/api/video/download/${encodeURIComponent(v.filename)}" download="VideoSession_${safeCustomerName}_${i+1}.webm">⬇ Download</a>
+      </div>`).join('');
+  } catch(e) {
+    listEl.innerHTML = '<div style="font-size:13px;color:red">Failed to load video list.</div>';
+  }
+}
+
+function refreshDetailVideoList() {
+  if (currentCustomer) loadDetailVideoList(currentCustomer.id, currentCustomer.name);
 }
 
 // ===== MODAL =====
@@ -837,7 +923,8 @@ function setupUploadUI(c) {
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         Signed agreement uploaded
       </div>
-      <a class="btn btn-outline btn-sm" href="/uploads/${c.agreementPdf}" target="_blank">View PDF</a>
+      <a class="btn btn-outline btn-sm" href="/uploads/${c.agreementPdf}" target="_blank">👁 View PDF</a>
+      <a class="btn btn-green btn-sm" href="/uploads/${c.agreementPdf}" download="Signed_Agreement_${(c.name||'Customer').replace(/\s+/g,'_')}.pdf">⬇ Download</a>
       <button class="btn btn-danger btn-sm" onclick="deleteAgreementPdf('${c.id}')">Remove</button>
     `;
   } else {
@@ -917,7 +1004,8 @@ function setupReceiptUploadUI(c) {
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         Signed receipt uploaded
       </div>
-      <a class="btn btn-outline btn-sm" href="/uploads/${c.receiptPdf}" target="_blank">View PDF</a>
+      <a class="btn btn-outline btn-sm" href="/uploads/${c.receiptPdf}" target="_blank">👁 View PDF</a>
+      <a class="btn btn-green btn-sm" href="/uploads/${c.receiptPdf}" download="Consultancy_Slip_${(c.name||'Customer').replace(/\s+/g,'_')}.pdf">⬇ Download</a>
       <button class="btn btn-danger btn-sm" onclick="deleteReceiptPdf('${c.id}')">Remove</button>
     `;
   } else {

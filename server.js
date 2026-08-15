@@ -409,6 +409,18 @@ app.get('/api/video/:customerId/list', (req, res) => {
   res.json({ videos: files });
 });
 
+// GET /api/video/download/:filename — force-download video file
+app.get('/api/video/download/:filename', (req, res) => {
+  const filename = path.basename(req.params.filename);
+  const filePath = path.join(VIDEO_DIR, filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
+  const stat = fs.statSync(filePath);
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Content-Type', 'video/webm');
+  res.setHeader('Content-Length', stat.size);
+  fs.createReadStream(filePath).pipe(res);
+});
+
 // GET /api/video/file/:filename — stream video with range support
 app.get('/api/video/file/:filename', (req, res) => {
   const filename = path.basename(req.params.filename); // prevent path traversal
