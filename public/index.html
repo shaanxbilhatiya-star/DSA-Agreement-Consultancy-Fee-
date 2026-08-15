@@ -1209,11 +1209,22 @@ This is an electronically generated email. This email, along with its attachment
     if (!result.ok) throw new Error(data.error || 'Send failed');
     toast(`✅ Email sent! (${data.attached} file${data.attached !== 1 ? 's' : ''} attached automatically)`);
   } catch (e) {
-    if (e.name === 'AbortError') {
-      toast('❌ Email request was cancelled.');
-    } else {
-      toast('❌ ' + (e.message || 'Email failed'));
-    }
+    const errMsg = e.name === 'AbortError' ? 'Request cancelled (timeout)' : (e.message || 'Unknown error');
+    // Show copyable error popup
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:14px;padding:28px;width:500px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+        <div style="font-size:17px;font-weight:700;color:#dc2626;margin-bottom:10px;">❌ Email Failed — Error Details</div>
+        <p style="font-size:13px;color:#6b7280;margin:0 0 10px;">Copy the error below and share it to get help:</p>
+        <textarea id="err-box" readonly style="width:100%;height:100px;font-family:monospace;font-size:12px;padding:10px;border:1px solid #fca5a5;border-radius:8px;background:#fff1f2;color:#991b1b;resize:none;box-sizing:border-box;">${errMsg}</textarea>
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button onclick="(()=>{const t=document.getElementById('err-box');t.select();document.execCommand('copy');this.textContent='✅ Copied!';setTimeout(()=>this.textContent='📋 Copy Error',2000);})()" style="flex:1;padding:9px;background:#dc2626;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">📋 Copy Error</button>
+          <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:9px;background:#f1f5f9;color:#374151;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;">Close</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
   } finally {
     clearTimeout(timeoutId);
     resetBtn();
