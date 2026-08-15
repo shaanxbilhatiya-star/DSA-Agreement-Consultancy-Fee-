@@ -547,16 +547,18 @@ textarea { resize: vertical; min-height: 70px; }
           <input type="text" id="f-loanAmt" placeholder="e.g. 500000">
         </div>
         <div class="form-group">
-          <label>Loan Amount in Words</label>
-          <input type="text" id="f-loanAmtWords" placeholder="e.g. पाँच लाख मात्र">
+          <label>Loan Amount in Words <span style="font-size:11px;color:#888;font-weight:400;">(auto-filled)</span></label>
+          <input type="text" id="f-loanAmtWords" placeholder="अंक भरने पर अपने आप भरेगा" readonly
+            style="background:#f3f4f6;color:#6b7280;cursor:not-allowed;border-color:#e5e7eb;">
         </div>
         <div class="form-group">
           <label>Success Fee — Figures (रु.)</label>
           <input type="text" id="f-successFee" placeholder="e.g. 15000">
         </div>
         <div class="form-group">
-          <label>Success Fee in Words</label>
-          <input type="text" id="f-successFeeWords" placeholder="e.g. पंद्रह हजार मात्र">
+          <label>Success Fee in Words <span style="font-size:11px;color:#888;font-weight:400;">(auto-filled)</span></label>
+          <input type="text" id="f-successFeeWords" placeholder="अंक भरने पर अपने आप भरेगा" readonly
+            style="background:#f3f4f6;color:#6b7280;cursor:not-allowed;border-color:#e5e7eb;">
         </div>
 
         <div class="section-title">🏦 PDC Cheque Details</div>
