@@ -520,8 +520,9 @@ textarea { resize: vertical; min-height: 70px; }
           <input type="text" id="f-aadhaar" placeholder="XXXX XXXX XXXX">
         </div>
         <div class="form-group">
-          <label>Date (दिनांक)</label>
-          <input type="date" id="f-date">
+          <label>Date (दिनांक) <span style="font-size:11px;color:#888;font-weight:400;">(auto-filled)</span></label>
+          <input type="date" id="f-date" readonly
+            style="background:#f3f4f6;color:#6b7280;cursor:not-allowed;border-color:#e5e7eb;">
         </div>
         <div class="form-group">
           <label>Place / Location (स्थान)</label>
@@ -580,8 +581,11 @@ textarea { resize: vertical; min-height: 70px; }
           <input type="text" id="f-chequeAmt" placeholder="e.g. 15000">
         </div>
         <div class="form-group">
-          <label>Cheque Date</label>
+          <label>Cheque Date (चेक की तारीख)</label>
           <input type="date" id="f-chequeDate">
+          <small style="color:#b45309;font-size:12px;margin-top:4px;display:block;">
+            ⚠️ वही तारीख चुनें जब आप इस चेक को बैंक में जमा करना चाहते हैं।
+          </small>
         </div>
 
         <div class="section-title">📝 Notes</div>
