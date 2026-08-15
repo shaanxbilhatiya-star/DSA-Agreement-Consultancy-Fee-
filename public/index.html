@@ -56,12 +56,13 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--gray-50
 #topbar h1 { font-size: 18px; font-weight: 700; color: var(--navy); flex-shrink: 0; margin-right: 24px; }
 #topbar .search-wrap { position: relative; flex: 1; max-width: 720px; }
 #topbar input {
-  width: 100%; padding: 8px 12px 8px 36px; border: 1px solid var(--gray-200);
-  border-radius: 8px; font-size: 14px; background: var(--gray-50); outline: none;
-  transition: border .15s; box-sizing: border-box;
+  width: 100%; padding: 13px 16px 13px 44px; border: 2px solid var(--purple);
+  border-radius: 10px; font-size: 15px; background: #f5f3ff; color: var(--navy); outline: none;
+  transition: border .15s, background .15s; box-sizing: border-box; font-weight: 500;
 }
-#topbar input:focus { border-color: var(--purple); background: #fff; }
-#topbar .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--gray-400); }
+#topbar input::placeholder { color: #8b7ac9; }
+#topbar input:focus { border-color: var(--navy); background: #fff; }
+#topbar .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--purple); width: 18px; height: 18px; }
 #content { padding: 28px; }
 
 /* ===== VIEWS ===== */
