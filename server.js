@@ -254,6 +254,195 @@ app.delete('/api/customers/:id/receipt', (req, res) => {
   res.json({ ok: true });
 });
 
+
+// ===== VIDEO VERIFICATION ROUTES =====
+const VIDEO_DIR = path.join(__dirname, 'uploads', 'videos');
+if (!fs.existsSync(VIDEO_DIR)) fs.mkdirSync(VIDEO_DIR, { recursive: true });
+
+// Simple multipart parser for video/webm blobs (reuses same pattern as PDF upload)
+function parseVideoMultipart(req) {
+  return new Promise((resolve, reject) => {
+    const contentType = req.headers['content-type'] || '';
+    if (!contentType.includes('multipart/form-data')) {
+      return reject(new Error('Not multipart'));
+    }
+    const boundaryMatch = contentType.match(/boundary=(.+)/);
+    if (!boundaryMatch) return reject(new Error('No boundary'));
+    const boundary = boundaryMatch[1].trim();
+    const chunks = [];
+    req.on('data', c => chunks.push(c));
+    req.on('end', () => {
+      const buf = Buffer.concat(chunks);
+      const boundaryBuf = Buffer.from('--' + boundary);
+      let start = 0;
+      const parts = [];
+      while (true) {
+        const idx = buf.indexOf(boundaryBuf, start);
+        if (idx === -1) break;
+        if (start > 0) parts.push(buf.slice(start, idx));
+        start = idx + boundaryBuf.length;
+        if (buf[start] === 0x0d && buf[start+1] === 0x0a) start += 2;
+        if (buf[start] === 0x2d && buf[start+1] === 0x2d) break;
+      }
+      for (const part of parts) {
+        const hEnd = part.indexOf('\r\n\r\n');
+        if (hEnd === -1) continue;
+        const headers = part.slice(0, hEnd).toString();
+        if (!headers.includes('filename=') && !headers.includes('name="video"')) continue;
+        let body = part.slice(hEnd + 4);
+        if (body[body.length-2] === 0x0d && body[body.length-1] === 0x0a) body = body.slice(0, -2);
+        const fnMatch = headers.match(/filename="([^"]+)"/);
+        return resolve({ filename: fnMatch ? fnMatch[1] : 'video.webm', data: body });
+      }
+      reject(new Error('No video part found'));
+    });
+    req.on('error', reject);
+  });
+}
+
+// GET /api/video/:customerId/script — returns dynamic script with substituted fields
+app.get('/api/video/:customerId/script', (req, res) => {
+  const state = loadState();
+  const c = state.customers.find(x => x.id === req.params.customerId);
+  if (!c) return res.status(404).json({ error: 'Customer not found' });
+
+  // Format agreement date from customer date or today
+  const agreeDate = c.date
+    ? new Date(c.date).toLocaleDateString('hi-IN', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : new Date().toLocaleDateString('hi-IN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  const name = c.name || '___';
+  const fee = c.successFee ? 'रु. ' + Number(c.successFee).toLocaleString('en-IN') : 'रु. ___';
+  const chequeNo = c.chequeNo || '___';
+  const bankBranch = c.chequeBankBranch || '___';
+
+  const blocks = [
+    {
+      label: 'प्रारंभ (Opening)',
+      type: 'opening',
+      text: `आज दिनांक ${agreeDate}, हम ${name} जी की ऋण सुविधा परामर्श अनुबंध की वीडियो पुष्टि रिकॉर्ड कर रहे हैं।`
+    },
+    {
+      label: 'Q1 — पहचान (Section 1)',
+      text: 'अपना पूरा नाम और पिता/पति का नाम बताइए।'
+    },
+    {
+      label: 'Q2 — स्वैच्छिक हस्ताक्षर (Section 16b)',
+      text: 'क्या आपने यह अनुबंध बिना किसी दबाव या जोर-जबरदस्ती के, अपनी स्वतंत्र इच्छा से हस्ताक्षर किया है?'
+    },
+    {
+      label: 'Q3 — शुल्क की समझ (Section 2, 16c)',
+      text: `क्या आप समझते हैं कि Ruralift की परामर्श सेवा निःशुल्क है, और सफलता-आधारित शुल्क ${fee} केवल ऋण के सफल वितरण पर ही देय होगा?`
+    },
+    {
+      label: 'Q4 — PDC की समझ (Section 3, 16e)',
+      text: `क्या आपने स्वेच्छा से चेक नंबर ${chequeNo} (${bankBranch}) जारी किया है, और आप समझते हैं कि यह कब जमा किया जा सकता है — ऋण वितरण पर शुल्क के रूप में, या अनुबंध भंग होने पर क्षतिपूर्ति के रूप में?`
+    },
+    {
+      label: 'Q5 — चेक बाउंस परिणाम (Section 3f, 16e)',
+      text: 'क्या आप जानते हैं कि चेक अनादरण की स्थिति में आप धारा 138, परक्राम्य लिखत अधिनियम के अंतर्गत आपराधिक रूप से दायी होंगे?'
+    },
+    {
+      label: 'Q6 — DSA/कमीशन खुलासा (Section 16j)',
+      text: 'क्या आपको बताया गया है कि Ruralift का ऋण संस्थानों के साथ DSA संबंध हो सकता है और वह कमीशन भी प्राप्त कर सकता है — फिर भी आप यह अतिरिक्त परामर्श शुल्क देने पर सहमत हैं?'
+    },
+    {
+      label: 'Q7 — ऋण की गारंटी नहीं (Section 16f, 16h)',
+      text: 'क्या आप समझते हैं कि Ruralift ऋणदाता नहीं है और ऋण स्वीकृति की कोई गारंटी नहीं दी गई है?'
+    },
+    {
+      label: 'Q8 — दस्तावेज़ों की सत्यता (Section 16g)',
+      text: 'क्या आपके द्वारा दिए गए सभी दस्तावेज़ और जानकारी सत्य, सटीक और पूर्ण हैं?'
+    },
+    {
+      label: 'Q9 — डेटा शेयरिंग सहमति (Section 16i)',
+      text: 'क्या आप सहमत हैं कि आपकी जानकारी बैंकों/NBFCs के साथ साझा की जा सकती है?'
+    },
+    {
+      label: 'समापन (Closing — ग्राहक बोलें)',
+      type: 'closing',
+      text: `मैं ${name} पुष्टि करता/करती हूँ कि मैंने यह अनुबंध पढ़कर, समझकर, स्वेच्छा से हस्ताक्षर किया है।`
+    }
+  ];
+
+  res.json({ blocks });
+});
+
+// POST /api/video/:customerId/upload — accept webm blob, save to uploads/videos/
+app.post('/api/video/:customerId/upload', async (req, res) => {
+  const state = loadState();
+  const c = state.customers.find(x => x.id === req.params.customerId);
+  if (!c) return res.status(404).json({ error: 'Customer not found' });
+
+  try {
+    const { data } = await parseVideoMultipart(req);
+    if (data.length > 200 * 1024 * 1024) {
+      return res.status(400).json({ error: 'File too large (max 200MB)' });
+    }
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const filename = `video-${req.params.customerId}-${timestamp}.webm`;
+    fs.writeFileSync(path.join(VIDEO_DIR, filename), data);
+    res.json({ ok: true, filename });
+  } catch(e) {
+    res.status(400).json({ error: e.message || 'Upload failed' });
+  }
+});
+
+// GET /api/video/:customerId/list — list saved videos for a customer
+app.get('/api/video/:customerId/list', (req, res) => {
+  const prefix = 'video-' + req.params.customerId + '-';
+  let files = [];
+  if (fs.existsSync(VIDEO_DIR)) {
+    files = fs.readdirSync(VIDEO_DIR)
+      .filter(f => f.startsWith(prefix) && f.endsWith('.webm'))
+      .sort()
+      .reverse()
+      .map(f => {
+        const stat = fs.statSync(path.join(VIDEO_DIR, f));
+        const mb = (stat.size / (1024*1024)).toFixed(1);
+        // Parse date from filename: video-{id}-YYYY-MM-DDTHH-MM-SS.webm
+        const datePart = f.replace(prefix, '').replace('.webm', '');
+        const friendly = datePart.replace('T', ' ').replace(/-/g, (m, o) => o < 10 ? '-' : ':');
+        return { filename: f, date: friendly, size: mb + ' MB' };
+      });
+  }
+  res.json({ videos: files });
+});
+
+// GET /api/video/file/:filename — stream video with range support
+app.get('/api/video/file/:filename', (req, res) => {
+  const filename = path.basename(req.params.filename); // prevent path traversal
+  const filePath = path.join(VIDEO_DIR, filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
+
+  const stat = fs.statSync(filePath);
+  const fileSize = stat.size;
+  const range = req.headers.range;
+
+  if (range) {
+    const parts = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+    const chunkSize = end - start + 1;
+    const fileStream = fs.createReadStream(filePath, { start, end });
+    res.writeHead(206, {
+      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-Length': chunkSize,
+      'Content-Type': 'video/webm',
+    });
+    fileStream.pipe(res);
+  } else {
+    res.writeHead(200, {
+      'Content-Length': fileSize,
+      'Content-Type': 'video/webm',
+      'Accept-Ranges': 'bytes',
+    });
+    fs.createReadStream(filePath).pipe(res);
+  }
+});
+
+
 // Listen on all interfaces so any device on the same LAN can connect
 app.listen(PORT, '0.0.0.0', () => {
   console.log('\n===========================================');
