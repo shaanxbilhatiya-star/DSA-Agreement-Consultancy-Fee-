@@ -637,10 +637,33 @@ app.post('/api/send-email', async (req, res) => {
     });
   }
 
+  // Check total attachment size — Gmail hard limit is 25MB
+  const MAX_BYTES = 24 * 1024 * 1024; // 24MB to be safe
+  let totalSize = 0;
+  const sizeWarnings = [];
+  const safeAttachments = attachments.filter(a => {
+    try {
+      const s = fs.statSync(a.path).size;
+      totalSize += s;
+      const mb = (s / (1024 * 1024)).toFixed(1);
+      console.log(`  Attachment: ${a.filename} — ${mb} MB`);
+      if (totalSize > MAX_BYTES) {
+        sizeWarnings.push(`${a.filename} skipped (total would exceed 24 MB)`);
+        totalSize -= s;
+        return false;
+      }
+      return true;
+    } catch { return false; }
+  });
+  if (sizeWarnings.length) console.warn('Size warnings:', sizeWarnings);
+
   try {
     const auth = getOAuth2Client();
     const transporter = nodemailer.createTransport({
       service: 'gmail',
+      socketTimeout: 30000,   // 30s — fail fast instead of hanging
+      greetingTimeout: 15000,
+      connectionTimeout: 15000,
       auth: {
         type: 'OAuth2',
         user: cfg.gmailUser,
@@ -656,10 +679,10 @@ app.post('/api/send-email', async (req, res) => {
       to: toEmail,
       subject,
       text: body,
-      attachments
+      attachments: safeAttachments
     });
 
-    res.json({ ok: true, attached: attachments.length, from: cfg.gmailUser });
+    res.json({ ok: true, attached: safeAttachments.length, from: cfg.gmailUser, warnings: sizeWarnings });
   } catch (e) {
     const fullError = e.response?.body ? JSON.stringify(e.response.body) : (e.message || 'Unknown error');
     console.error('Email send error:', fullError, e.stack || '');
