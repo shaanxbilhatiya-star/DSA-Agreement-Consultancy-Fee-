@@ -1,6 +1,29 @@
 {
   "customers": [
     {
+      "id": "1782500000001",
+      "createdAt": "2026-08-15T10:30:00.000Z",
+      "name": "Sunita Devi Patel",
+      "mobile": "9425123456",
+      "aadhaar": "9876 5432 1098",
+      "date": "2026-08-15",
+      "place": "Mandla",
+      "address": "Ward 12, Gandhi Nagar, Mandla, Madhya Pradesh - 481661",
+      "receiptNo": "RL-2026-001",
+      "payMode": "UPI",
+      "utr": "UPI20260815001",
+      "loanAmt": "300000",
+      "loanAmtWords": "तीन लाख मात्र",
+      "successFee": "9000",
+      "successFeeWords": "नौ हजार मात्र",
+      "chequeNo": "005678",
+      "chequeBankBranch": "Bank of India, Mandla Branch",
+      "chequeHolder": "Sunita Devi Patel",
+      "chequeAmt": "9000",
+      "chequeDate": "2026-11-15",
+      "notes": "Test customer added for system verification. Loan purpose: Home renovation."
+    },
+    {
       "id": "1781242858352",
       "createdAt": "2026-06-12T05:40:58.352Z",
       "name": "Ramesh Kumar",
