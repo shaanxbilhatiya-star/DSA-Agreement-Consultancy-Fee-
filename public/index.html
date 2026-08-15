@@ -120,18 +120,18 @@ body {
 #topbar .search-wrap { position: relative; flex: 1; max-width: none; }
 #topbar input {
   width: 100%; padding: 11px 16px 11px 44px;
-  border: 2px solid #c4b5fd;
+  border: 2px solid #333;
   border-radius: 12px; font-size: 14px; font-family: inherit;
-  background: #f5f2ff; color: var(--gray-800); outline: none;
+  background: #111; color: #fff; outline: none;
   transition: all .2s; box-sizing: border-box; font-weight: 500;
 }
-#topbar input::placeholder { color: #9b8dc8; }
+#topbar input::placeholder { color: #aaa; }
 #topbar input:focus {
-  border-color: var(--p3);
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(139,92,246,.18);
+  border-color: #555;
+  background: #1a1a1a;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.08);
 }
-#topbar .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--p4); width: 17px; height: 17px; }
+#topbar .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #fff; width: 17px; height: 17px; }
 #content { padding: 28px; }
 
 /* ===== VIEWS ===== */
@@ -353,15 +353,15 @@ textarea { resize: vertical; min-height: 70px; }
 .toast.show { opacity: 1; transform: translateY(0); }
 
 /* ===== PDF BADGE ===== */
-.badge-pdf { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #15803d; font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; border: 1px solid #86efac; box-shadow: 0 1px 3px rgba(22,163,74,.15); }
-.badge-pdf svg { width: 13px; height: 13px; }
+.badge-pdf { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #15803d; font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; border: 1px solid #86efac; box-shadow: 0 1px 2px rgba(22,163,74,.12); }
+.badge-pdf svg { width: 11px; height: 11px; }
 .badge-video {
   background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: var(--p2);
-  font-size: 11px; padding: 4px 10px; border-radius: 12px; font-weight: 700;
-  display: inline-flex; align-items: center; gap: 4px;
-  border: 1px solid #c4b5fd; box-shadow: 0 1px 3px rgba(109,40,217,.15);
+  font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 3px;
+  border: 1px solid #c4b5fd; box-shadow: 0 1px 2px rgba(109,40,217,.12);
 }
-.badge-video svg { width: 13px; height: 13px; }
+.badge-video svg { width: 11px; height: 11px; }
 
 /* ===== ACTION BUTTONS LAYOUT ===== */
 .actions-cell { display: flex; justify-content: space-between; align-items: center; gap: 6px; min-width: 200px; }
@@ -922,7 +922,7 @@ function rowHtml(c, showLoan = false, hasVideo = false) {
   const receiptBadge = c.receiptPdf ? `<span class="badge-pdf"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Receipt</span> ` : '';
   const videoBadge = hasVideo ? `<span class="badge-video"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>Video</span> ` : '';
   return `<tr>
-    <td>${pdfBadge}${receiptBadge}${videoBadge}<strong>${c.name || '—'}</strong></td>
+    <td><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start"><div style="display:flex;gap:4px;flex-wrap:wrap">${pdfBadge}${receiptBadge}${videoBadge}</div><strong>${c.name || '—'}</strong></div></td>
     <td>${c.mobile || '—'}</td>
     <td>${c.aadhaar || '—'}</td>
     ${loan}
