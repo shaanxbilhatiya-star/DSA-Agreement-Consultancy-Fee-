@@ -1106,18 +1106,11 @@ loadDashboard();
   async function startCamera() {
     const preview = document.getElementById('video-preview');
     const statusEl = document.getElementById('video-save-status');
+    statusEl.textContent = '';
+    statusEl.style.color = '';
 
     // Stop any existing tracks first
     if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
-
-    // Must be HTTPS or localhost for getUserMedia to work
-    const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    if (!isSecure) {
-      statusEl.textContent = '❌ कैमरा केवल HTTPS पर काम करता है। Railway पर HTTPS URL उपयोग करें।';
-      statusEl.style.color = 'red';
-      toast('HTTPS जरूरी है — http:// URL से कैमरा नहीं खुलेगा');
-      return;
-    }
 
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       statusEl.textContent = '❌ यह ब्राउज़र कैमरा सपोर्ट नहीं करता।';
@@ -1125,45 +1118,33 @@ loadDashboard();
       return;
     }
 
-    // Check permission state if API available
-    if (navigator.permissions && navigator.permissions.query) {
-      try {
-        const perm = await navigator.permissions.query({ name: 'camera' });
-        if (perm.state === 'denied') {
-          statusEl.textContent = '❌ कैमरा परमिशन ब्राउज़र में ब्लॉक है। ब्राउज़र एड्रेस बार में 🔒 पर क्लिक करके Camera को Allow करें, फिर पेज रीलोड करें।';
-          statusEl.style.color = 'red';
-          toast('Camera blocked — ब्राउज़र सेटिंग में Allow करें');
-          return;
-        }
-      } catch(e) { /* permissions API not supported, continue */ }
-    }
-
+    // Strategy: try video-only first (most reliable), then try adding audio
+    // This avoids mic OS-permission blocking the whole camera
     try {
-      // Try with both video+audio first
-      videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true });
+      videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       preview.srcObject = videoStream;
-      statusEl.textContent = '';
+      // Now try to add audio track separately — if it fails, silently continue video-only
+      try {
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        audioStream.getAudioTracks().forEach(t => videoStream.addTrack(t));
+        statusEl.textContent = '';
+      } catch(audioErr) {
+        // Mic blocked at OS level — record video only, warn user
+        statusEl.innerHTML = '⚠️ माइक्रोफ़ोन उपलब्ध नहीं (Windows सेटिंग में Chrome को mic दें) — केवल वीडियो रिकॉर्ड होगा।';
+        statusEl.style.color = 'orange';
+      }
     } catch(e) {
       if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
-        statusEl.innerHTML = '❌ <b>परमिशन नामंज़ूर।</b> ब्राउज़र एड्रेस बार में 🔒 → Camera → Allow करें, फिर पेज रीलोड करें।';
+        statusEl.innerHTML = '❌ <b>कैमरा ब्लॉक है।</b> एड्रेस बार में 🔒 → Camera → Allow करें, फिर पेज रीलोड करें।';
         statusEl.style.color = 'red';
-        toast('Camera permission denied — browser settings में Allow करें');
       } else if (e.name === 'NotFoundError' || e.name === 'DevicesNotFoundError') {
-        statusEl.textContent = '❌ कोई कैमरा नहीं मिला। कैमरा कनेक्ट करें।';
+        statusEl.textContent = '❌ कोई कैमरा नहीं मिला।';
         statusEl.style.color = 'red';
-      } else if (e.name === 'NotReadableError' || e.name === 'TrackStartError') {
-        // Camera in use by another app — try video only without audio
-        try {
-          videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-          preview.srcObject = videoStream;
-          statusEl.textContent = '⚠️ माइक्रोफ़ोन उपलब्ध नहीं — केवल वीडियो रिकॉर्ड होगा।';
-          statusEl.style.color = 'orange';
-        } catch(e2) {
-          statusEl.textContent = '❌ कैमरा किसी और ऐप ने लॉक किया है। दूसरे ऐप बंद करें और रीलोड करें।';
-          statusEl.style.color = 'red';
-        }
+      } else if (e.name === 'NotReadableError') {
+        statusEl.textContent = '❌ कैमरा किसी और ऐप में खुला है — बंद करके दोबारा कोशिश करें।';
+        statusEl.style.color = 'red';
       } else {
-        statusEl.textContent = '❌ कैमरा त्रुटि: ' + e.name + ' — ' + e.message;
+        statusEl.textContent = '❌ ' + e.name + ': ' + e.message;
         statusEl.style.color = 'red';
       }
     }
