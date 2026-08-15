@@ -1189,7 +1189,7 @@ This is an electronically generated email. This email, along with its attachment
     const data = await result.json();
     if (!result.ok) throw new Error(data.error || 'Send failed');
     let msg = `✅ Email sent! (${data.attached} file${data.attached !== 1 ? 's' : ''} attached)`;
-    if (data.warnings && data.warnings.length) msg += ' ⚠️ ' + data.warnings.join('; ');
+    if (data.driveLink) msg += ' 🎥 Video sent via Google Drive link';
     toast(msg);
   } catch (e) {
     // Show copyable error popup

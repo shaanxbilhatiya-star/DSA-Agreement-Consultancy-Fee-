@@ -551,6 +551,7 @@ app.get('/api/gmail-auth', (req, res) => {
     // address via the lightweight OAuth2 userinfo endpoint instead.
     scope: [
       'https://www.googleapis.com/auth/gmail.send',
+      'https://www.googleapis.com/auth/drive.file',
       'https://www.googleapis.com/auth/userinfo.email'
     ]
   });
@@ -594,6 +595,30 @@ app.get('/oauth2callback', async (req, res) => {
   }
 });
 
+// Upload a file to Google Drive and return a public shareable link
+async function uploadToDrive(auth, filePath, filename, mimeType) {
+  const drive = google.drive({ version: 'v3', auth });
+  const fileSize = fs.statSync(filePath).size;
+  console.log(`  Uploading to Drive: ${filename} (${(fileSize/1024/1024).toFixed(1)} MB)…`);
+
+  const res = await drive.files.create({
+    requestBody: { name: filename, mimeType },
+    media: { mimeType, body: fs.createReadStream(filePath) },
+    fields: 'id, name'
+  });
+  const fileId = res.data.id;
+
+  // Make it viewable by anyone with the link
+  await drive.permissions.create({
+    fileId,
+    requestBody: { role: 'reader', type: 'anyone' }
+  });
+
+  const link = `https://drive.google.com/file/d/${fileId}/view?usp=sharing`;
+  console.log(`  Drive upload done: ${link}`);
+  return link;
+}
+
 // POST /api/send-email — send via Gmail HTTP API (works on Railway — no SMTP needed)
 app.post('/api/send-email', async (req, res) => {
   const cfg = loadConfig();
@@ -610,9 +635,12 @@ app.post('/api/send-email', async (req, res) => {
   const c = state.customers.find(x => x.id === customerId);
   if (!c) return res.status(404).json({ error: 'Customer not found' });
 
-  // Build attachment list
-  const attachments = [];
   const safeName = (c.name||'Customer').replace(/\s+/g,'_');
+  const auth = getOAuth2Client();
+
+  // ── Collect files ──────────────────────────────────────────────
+  const attachments = []; // small files attached directly
+  let driveLink = null;   // large video uploaded to Drive instead
 
   if (c.agreementPdf) {
     const p = path.join(UPLOADS_DIR, c.agreementPdf);
@@ -622,29 +650,36 @@ app.post('/api/send-email', async (req, res) => {
     const p = path.join(UPLOADS_DIR, c.receiptPdf);
     if (fs.existsSync(p)) attachments.push({ filename: `Consultancy_Receipt_${safeName}.pdf`, path: p, mime: 'application/pdf' });
   }
+
+  // Video: attach if under 24MB, otherwise upload to Drive
   if (fs.existsSync(VIDEO_DIR)) {
     const prefix = 'video-' + customerId + '-';
     const videos = fs.readdirSync(VIDEO_DIR).filter(f => f.startsWith(prefix) && f.endsWith('.webm')).sort().reverse();
-    if (videos.length > 0) attachments.push({ filename: `VideoVerification_${safeName}.webm`, path: path.join(VIDEO_DIR, videos[0]), mime: 'video/webm' });
+    if (videos.length > 0) {
+      const videoPath = path.join(VIDEO_DIR, videos[0]);
+      const videoName = `VideoVerification_${safeName}.webm`;
+      const videoSize = fs.statSync(videoPath).size;
+      const MB = videoSize / (1024 * 1024);
+      console.log(`  Video: ${videoName} — ${MB.toFixed(1)} MB`);
+      if (MB <= 24) {
+        attachments.push({ filename: videoName, path: videoPath, mime: 'video/webm' });
+      } else {
+        console.log('  Video too large for email — uploading to Google Drive…');
+        driveLink = await uploadToDrive(auth, videoPath, videoName, 'video/webm');
+      }
+    }
   }
 
-  // Check total size — Gmail HTTP API limit is 25MB
-  const MAX_BYTES = 24 * 1024 * 1024;
-  let totalSize = 0;
-  const sizeWarnings = [];
-  const safeAttachments = attachments.filter(a => {
-    try {
-      const s = fs.statSync(a.path).size;
-      console.log(`  Attachment: ${a.filename} — ${(s/1024/1024).toFixed(1)} MB`);
-      if (totalSize + s > MAX_BYTES) { sizeWarnings.push(`${a.filename} skipped (exceeds 24MB limit)`); return false; }
-      totalSize += s;
-      return true;
-    } catch { return false; }
-  });
-
   try {
-    const auth = getOAuth2Client();
-    // Build RFC 2822 MIME email with attachments
+    // Build email body — append Drive link if video was uploaded there
+    let finalBody = body;
+    if (driveLink) {
+      finalBody += `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+      finalBody += `🎥 Video Verification Session:\n${driveLink}\n`;
+      finalBody += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+    }
+
+    // Build RFC 2822 MIME email
     const boundary = `boundary_${Date.now()}`;
     const nl = '\r\n';
     let mime = '';
@@ -654,12 +689,10 @@ app.post('/api/send-email', async (req, res) => {
     mime += `MIME-Version: 1.0${nl}`;
     mime += `Content-Type: multipart/mixed; boundary="${boundary}"${nl}`;
     mime += nl;
-    // Text part
     mime += `--${boundary}${nl}`;
     mime += `Content-Type: text/plain; charset="UTF-8"${nl}${nl}`;
-    mime += body + nl;
-    // Attachment parts
-    for (const a of safeAttachments) {
+    mime += finalBody + nl;
+    for (const a of attachments) {
       const data = fs.readFileSync(a.path).toString('base64');
       mime += `--${boundary}${nl}`;
       mime += `Content-Type: ${a.mime}; name="${a.filename}"${nl}`;
@@ -669,13 +702,16 @@ app.post('/api/send-email', async (req, res) => {
     }
     mime += `--${boundary}--`;
 
-    // Base64url encode the whole message
     const encoded = Buffer.from(mime).toString('base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-
     const gmail = google.gmail({ version: 'v1', auth });
     await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encoded } });
 
-    res.json({ ok: true, attached: safeAttachments.length, from: cfg.gmailUser, warnings: sizeWarnings });
+    res.json({
+      ok: true,
+      attached: attachments.length,
+      driveLink: driveLink || null,
+      from: cfg.gmailUser
+    });
   } catch (e) {
     const fullError = e.response?.data?.error?.message || e.message || 'Unknown error';
     console.error('Email send error:', fullError);
