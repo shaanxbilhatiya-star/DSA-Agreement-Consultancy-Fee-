@@ -594,7 +594,7 @@ app.get('/oauth2callback', async (req, res) => {
   }
 });
 
-// POST /api/send-email — send via Gmail API with auto-attached files
+// POST /api/send-email — send via Gmail HTTP API (works on Railway — no SMTP needed)
 app.post('/api/send-email', async (req, res) => {
   const cfg = loadConfig();
   if (!cfg.oauthTokens || !cfg.oauthTokens.refresh_token) {
@@ -610,83 +610,76 @@ app.post('/api/send-email', async (req, res) => {
   const c = state.customers.find(x => x.id === customerId);
   if (!c) return res.status(404).json({ error: 'Customer not found' });
 
-  // Build nodemailer attachments
+  // Build attachment list
   const attachments = [];
+  const safeName = (c.name||'Customer').replace(/\s+/g,'_');
+
   if (c.agreementPdf) {
     const p = path.join(UPLOADS_DIR, c.agreementPdf);
-    if (fs.existsSync(p)) attachments.push({
-      filename: `Signed_Agreement_${(c.name||'Customer').replace(/\s+/g,'_')}.pdf`,
-      path: p, contentType: 'application/pdf'
-    });
+    if (fs.existsSync(p)) attachments.push({ filename: `Signed_Agreement_${safeName}.pdf`, path: p, mime: 'application/pdf' });
   }
   if (c.receiptPdf) {
     const p = path.join(UPLOADS_DIR, c.receiptPdf);
-    if (fs.existsSync(p)) attachments.push({
-      filename: `Consultancy_Receipt_${(c.name||'Customer').replace(/\s+/g,'_')}.pdf`,
-      path: p, contentType: 'application/pdf'
-    });
+    if (fs.existsSync(p)) attachments.push({ filename: `Consultancy_Receipt_${safeName}.pdf`, path: p, mime: 'application/pdf' });
   }
   if (fs.existsSync(VIDEO_DIR)) {
     const prefix = 'video-' + customerId + '-';
-    const videos = fs.readdirSync(VIDEO_DIR)
-      .filter(f => f.startsWith(prefix) && f.endsWith('.webm'))
-      .sort().reverse();
-    if (videos.length > 0) attachments.push({
-      filename: `VideoVerification_${(c.name||'Customer').replace(/\s+/g,'_')}.webm`,
-      path: path.join(VIDEO_DIR, videos[0]), contentType: 'video/webm'
-    });
+    const videos = fs.readdirSync(VIDEO_DIR).filter(f => f.startsWith(prefix) && f.endsWith('.webm')).sort().reverse();
+    if (videos.length > 0) attachments.push({ filename: `VideoVerification_${safeName}.webm`, path: path.join(VIDEO_DIR, videos[0]), mime: 'video/webm' });
   }
 
-  // Check total attachment size — Gmail hard limit is 25MB
-  const MAX_BYTES = 24 * 1024 * 1024; // 24MB to be safe
+  // Check total size — Gmail HTTP API limit is 25MB
+  const MAX_BYTES = 24 * 1024 * 1024;
   let totalSize = 0;
   const sizeWarnings = [];
   const safeAttachments = attachments.filter(a => {
     try {
       const s = fs.statSync(a.path).size;
+      console.log(`  Attachment: ${a.filename} — ${(s/1024/1024).toFixed(1)} MB`);
+      if (totalSize + s > MAX_BYTES) { sizeWarnings.push(`${a.filename} skipped (exceeds 24MB limit)`); return false; }
       totalSize += s;
-      const mb = (s / (1024 * 1024)).toFixed(1);
-      console.log(`  Attachment: ${a.filename} — ${mb} MB`);
-      if (totalSize > MAX_BYTES) {
-        sizeWarnings.push(`${a.filename} skipped (total would exceed 24 MB)`);
-        totalSize -= s;
-        return false;
-      }
       return true;
     } catch { return false; }
   });
-  if (sizeWarnings.length) console.warn('Size warnings:', sizeWarnings);
 
   try {
     const auth = getOAuth2Client();
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      socketTimeout: 30000,   // 30s — fail fast instead of hanging
-      greetingTimeout: 15000,
-      connectionTimeout: 15000,
-      auth: {
-        type: 'OAuth2',
-        user: cfg.gmailUser,
-        clientId: cfg.oauthClientId,
-        clientSecret: cfg.oauthClientSecret,
-        refreshToken: cfg.oauthTokens.refresh_token,
-        accessToken: cfg.oauthTokens.access_token
-      }
-    });
+    // Build RFC 2822 MIME email with attachments
+    const boundary = `boundary_${Date.now()}`;
+    const nl = '\r\n';
+    let mime = '';
+    mime += `From: "Ruralift" <${cfg.gmailUser}>${nl}`;
+    mime += `To: ${toEmail}${nl}`;
+    mime += `Subject: ${subject}${nl}`;
+    mime += `MIME-Version: 1.0${nl}`;
+    mime += `Content-Type: multipart/mixed; boundary="${boundary}"${nl}`;
+    mime += nl;
+    // Text part
+    mime += `--${boundary}${nl}`;
+    mime += `Content-Type: text/plain; charset="UTF-8"${nl}${nl}`;
+    mime += body + nl;
+    // Attachment parts
+    for (const a of safeAttachments) {
+      const data = fs.readFileSync(a.path).toString('base64');
+      mime += `--${boundary}${nl}`;
+      mime += `Content-Type: ${a.mime}; name="${a.filename}"${nl}`;
+      mime += `Content-Transfer-Encoding: base64${nl}`;
+      mime += `Content-Disposition: attachment; filename="${a.filename}"${nl}${nl}`;
+      mime += data + nl;
+    }
+    mime += `--${boundary}--`;
 
-    await transporter.sendMail({
-      from: `"Ruralift" <${cfg.gmailUser}>`,
-      to: toEmail,
-      subject,
-      text: body,
-      attachments: safeAttachments
-    });
+    // Base64url encode the whole message
+    const encoded = Buffer.from(mime).toString('base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+
+    const gmail = google.gmail({ version: 'v1', auth });
+    await gmail.users.messages.send({ userId: 'me', requestBody: { raw: encoded } });
 
     res.json({ ok: true, attached: safeAttachments.length, from: cfg.gmailUser, warnings: sizeWarnings });
   } catch (e) {
-    const fullError = e.response?.body ? JSON.stringify(e.response.body) : (e.message || 'Unknown error');
-    console.error('Email send error:', fullError, e.stack || '');
-    res.status(500).json({ error: fullError, code: e.code || '', stack: e.stack || '' });
+    const fullError = e.response?.data?.error?.message || e.message || 'Unknown error';
+    console.error('Email send error:', fullError);
+    res.status(500).json({ error: fullError });
   }
 });
 
