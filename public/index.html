@@ -141,6 +141,31 @@ textarea { resize: vertical; min-height: 70px; }
 .modal { background: #fff; border-radius: 16px; width: 860px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
 .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: #fff; z-index: 10; }
 .modal-header h3 { font-size: 17px; font-weight: 700; color: var(--navy); }
+    .btn-video { background: #7c3aed; color: #fff; border: none; }
+    .btn-video:hover { background: #6d28d9; }
+    /* Video Recording Modal */
+    .video-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 300; align-items: center; justify-content: center; }
+    .video-modal-overlay.open { display: flex; }
+    .video-modal { background: #fff; border-radius: 16px; width: 980px; max-width: 97vw; max-height: 95vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 24px 80px rgba(0,0,0,.35); }
+    .video-modal-header { padding: 16px 20px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; background: #fff; }
+    .video-modal-header h3 { font-size: 16px; font-weight: 700; color: var(--navy); }
+    .video-modal-body { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+    .video-panel { flex: 1; padding: 16px; display: flex; flex-direction: column; gap: 10px; border-right: 1px solid var(--gray-200); }
+    .script-panel { width: 360px; padding: 16px; overflow-y: auto; background: #f9fafb; }
+    .script-panel h4 { font-size: 13px; font-weight: 700; color: var(--navy); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    .script-block { margin-bottom: 14px; padding: 10px 12px; border-radius: 8px; background: #fff; border: 1px solid var(--gray-200); }
+    .script-block .q-label { font-size: 11px; font-weight: 700; color: #7c3aed; text-transform: uppercase; margin-bottom: 4px; }
+    .script-block .q-text { font-size: 13.5px; color: #1e293b; line-height: 1.6; font-family: "Noto Sans Devanagari", sans-serif; }
+    .script-block.opening { background: #ede9fe; border-color: #c4b5fd; }
+    .script-block.closing { background: #dcfce7; border-color: #86efac; }
+    #video-preview { width: 100%; border-radius: 10px; background: #000; aspect-ratio: 16/9; object-fit: cover; }
+    .video-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .rec-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #ef4444; animation: blink 1s infinite; margin-right: 4px; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .video-list { margin-top: 10px; }
+    .video-list-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #f1f5f9; border-radius: 8px; margin-bottom: 6px; font-size: 13px; }
+    .video-list-item a { color: #7c3aed; font-weight: 600; text-decoration: none; flex: 1; }
+    .video-list-item a:hover { text-decoration: underline; }
 .modal-body { padding: 24px; }
 .close-btn { background: none; border: none; cursor: pointer; color: var(--gray-400); padding: 4px; border-radius: 6px; }
 .close-btn:hover { background: var(--gray-100); color: var(--gray-800); }
@@ -294,6 +319,7 @@ textarea { resize: vertical; min-height: 70px; }
         <div class="detail-actions">
           <button class="btn btn-outline btn-sm" onclick="showView('customers')">← Back</button>
           <button class="btn btn-outline btn-sm" id="detail-edit-btn">Edit</button>
+          <button class="btn btn-video btn-sm" id="video-record-btn" onclick="openVideoModal()">🎥 वीडियो रिकॉर्ड करें</button>
           <button class="btn btn-danger btn-sm" style="margin-left:auto" id="detail-delete-btn">Delete</button>
         </div>
       </div>
@@ -365,6 +391,45 @@ textarea { resize: vertical; min-height: 70px; }
 
   </div><!-- /content -->
 </div><!-- /main -->
+
+
+<!-- VIDEO RECORDING MODAL -->
+<div class="video-modal-overlay" id="video-modal">
+  <div class="video-modal">
+    <div class="video-modal-header">
+      <h3>🎥 वीडियो सत्यापन रिकॉर्डिंग</h3>
+      <button class="close-btn" onclick="closeVideoModal()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="video-modal-body">
+      <!-- LEFT: Camera & Controls -->
+      <div class="video-panel">
+        <video id="video-preview" autoplay muted playsinline></video>
+        <div class="video-controls">
+          <button class="btn btn-primary btn-sm" id="vbtn-start" onclick="startRecording()">● रिकॉर्ड शुरू करें</button>
+          <button class="btn btn-danger btn-sm" id="vbtn-stop" onclick="stopRecording()" style="display:none"><span class="rec-dot"></span>रोकें</button>
+          <button class="btn btn-green btn-sm" id="vbtn-save" onclick="saveVideo()" style="display:none">💾 सहेजें</button>
+          <button class="btn btn-outline btn-sm" id="vbtn-redo" onclick="redoRecording()" style="display:none">↺ फिर से</button>
+        </div>
+        <video id="video-playback" controls style="display:none;width:100%;border-radius:10px;background:#000;aspect-ratio:16/9"></video>
+        <div id="video-save-status" style="font-size:13px;color:var(--gray-600)"></div>
+
+        <!-- Saved videos list -->
+        <div id="video-list-section" style="margin-top:8px">
+          <div style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:6px">पहले रिकॉर्ड किए गए वीडियो</div>
+          <div class="video-list" id="video-list-items"><div style="font-size:13px;color:var(--gray-400)">लोड हो रहा है…</div></div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Script Panel -->
+      <div class="script-panel" id="video-script-panel">
+        <h4>📋 स्क्रिप्ट — एजेंट पढ़ें</h4>
+        <div style="font-size:13px;color:var(--gray-400)">स्क्रिप्ट लोड हो रही है…</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ADD/EDIT MODAL -->
 <div class="modal-overlay" id="modal">
@@ -1030,6 +1095,155 @@ document.getElementById('modal').addEventListener('click', function(e) {
 
 // ===== INIT =====
 loadDashboard();
+
+
+  // ===== VIDEO RECORDING =====
+  let videoStream = null;
+  let mediaRecorder = null;
+  let recordedChunks = [];
+  let recordedBlob = null;
+
+  async function openVideoModal() {
+    if (!currentCustomer) return;
+    document.getElementById('video-modal').classList.add('open');
+    // Reset UI
+    showVideoBtn('start');
+    document.getElementById('video-playback').style.display = 'none';
+    document.getElementById('video-save-status').textContent = '';
+    recordedBlob = null;
+    recordedChunks = [];
+
+    // Start camera
+    try {
+      videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      document.getElementById('video-preview').srcObject = videoStream;
+    } catch(e) {
+      toast('कैमरा एक्सेस नहीं मिला: ' + e.message);
+    }
+
+    // Load script
+    loadVideoScript(currentCustomer.id);
+    // Load saved videos
+    loadVideoList(currentCustomer.id);
+  }
+
+  function closeVideoModal() {
+    document.getElementById('video-modal').classList.remove('open');
+    if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+    mediaRecorder = null;
+  }
+
+  function showVideoBtn(mode) {
+    // mode: 'start' | 'recording' | 'preview'
+    document.getElementById('vbtn-start').style.display = mode === 'start' ? '' : 'none';
+    document.getElementById('vbtn-stop').style.display = mode === 'recording' ? '' : 'none';
+    document.getElementById('vbtn-save').style.display = mode === 'preview' ? '' : 'none';
+    document.getElementById('vbtn-redo').style.display = mode === 'preview' ? '' : 'none';
+    document.getElementById('video-preview').style.display = mode === 'preview' ? 'none' : '';
+    document.getElementById('video-playback').style.display = mode === 'preview' ? '' : 'none';
+  }
+
+  function startRecording() {
+    if (!videoStream) return toast('पहले कैमरा चालू करें');
+    recordedChunks = [];
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
+      ? 'video/webm;codecs=vp9,opus' : 'video/webm';
+    mediaRecorder = new MediaRecorder(videoStream, { mimeType });
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+      recordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(recordedBlob);
+      const pb = document.getElementById('video-playback');
+      pb.src = url;
+      showVideoBtn('preview');
+    };
+    mediaRecorder.start(1000);
+    showVideoBtn('recording');
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  }
+
+  function redoRecording() {
+    recordedBlob = null; recordedChunks = [];
+    document.getElementById('video-save-status').textContent = '';
+    // Restart preview stream
+    if (!videoStream || videoStream.getTracks().some(t => t.readyState === 'ended')) {
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then(s => {
+        videoStream = s;
+        document.getElementById('video-preview').srcObject = s;
+      }).catch(e => toast('कैमरा: ' + e.message));
+    } else {
+      document.getElementById('video-preview').srcObject = videoStream;
+    }
+    showVideoBtn('start');
+  }
+
+  async function saveVideo() {
+    if (!recordedBlob || !currentCustomer) return;
+    const statusEl = document.getElementById('video-save-status');
+    statusEl.textContent = 'अपलोड हो रहा है…';
+    const formData = new FormData();
+    formData.append('video', recordedBlob, 'verification.webm');
+    try {
+      const res = await fetch('/api/video/' + currentCustomer.id + '/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (res.ok) {
+        statusEl.textContent = '✅ वीडियो सफलतापूर्वक सहेजा गया!';
+        toast('वीडियो सहेजा गया');
+        loadVideoList(currentCustomer.id);
+        showVideoBtn('start');
+        // Restart live preview
+        if (videoStream && videoStream.getTracks().every(t => t.readyState === 'live')) {
+          document.getElementById('video-preview').srcObject = videoStream;
+        }
+      } else {
+        statusEl.textContent = '❌ ' + (data.error || 'अपलोड विफल');
+      }
+    } catch(e) {
+      statusEl.textContent = '❌ ' + e.message;
+    }
+  }
+
+  async function loadVideoScript(customerId) {
+    const panel = document.getElementById('video-script-panel');
+    try {
+      const res = await fetch('/api/video/' + customerId + '/script');
+      const data = await res.json();
+      if (!res.ok) { panel.innerHTML = '<h4>📋 स्क्रिप्ट</h4><p style="color:red">' + (data.error||'Error') + '</p>'; return; }
+      const blocks = data.blocks;
+      panel.innerHTML = '<h4>📋 स्क्रिप्ट — एजेंट पढ़ें</h4>' + blocks.map(b => `
+        <div class="script-block ${b.type||''}">
+          <div class="q-label">${b.label}</div>
+          <div class="q-text">${b.text}</div>
+        </div>`).join('');
+    } catch(e) {
+      panel.innerHTML = '<h4>📋 स्क्रिप्ट</h4><p style="color:red">लोड नहीं हुई</p>';
+    }
+  }
+
+  async function loadVideoList(customerId) {
+    const listEl = document.getElementById('video-list-items');
+    try {
+      const res = await fetch('/api/video/' + customerId + '/list');
+      const data = await res.json();
+      if (!data.videos || data.videos.length === 0) {
+        listEl.innerHTML = '<div style="font-size:13px;color:var(--gray-400)">कोई वीडियो नहीं मिला</div>';
+        return;
+      }
+      listEl.innerHTML = data.videos.map((v, i) => `
+        <div class="video-list-item">
+          <a href="/api/video/file/${encodeURIComponent(v.filename)}" target="_blank">🎥 वीडियो ${i+1} — ${v.date}</a>
+          <span style="font-size:12px;color:var(--gray-400)">${v.size}</span>
+        </div>`).join('');
+    } catch(e) {
+      listEl.innerHTML = '<div style="font-size:13px;color:red">लिस्ट लोड नहीं हुई</div>';
+    }
+  }
+
 </script>
 </body>
 </html>
+
