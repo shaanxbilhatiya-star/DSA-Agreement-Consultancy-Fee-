@@ -1195,7 +1195,7 @@ This is an electronically generated email. This email, along with its attachment
   const timeoutId = setTimeout(() => {
     resetBtn();
     toast('❌ Request timed out. Check Gmail connection and try again.');
-  }, 60000);
+  }, 90000);
 
   try {
     const controller = new AbortController();
@@ -1206,7 +1206,7 @@ This is an electronically generated email. This email, along with its attachment
       signal: controller.signal
     });
     const data = await result.json();
-    if (!result.ok) throw new Error(data.error || 'Send failed');
+    if (!result.ok) throw new Error((data.code ? '[' + data.code + '] ' : '') + (data.error || 'Send failed'));
     toast(`✅ Email sent! (${data.attached} file${data.attached !== 1 ? 's' : ''} attached automatically)`);
   } catch (e) {
     const errMsg = e.name === 'AbortError' ? 'Request cancelled (timeout)' : (e.message || 'Unknown error');

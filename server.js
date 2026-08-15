@@ -661,8 +661,9 @@ app.post('/api/send-email', async (req, res) => {
 
     res.json({ ok: true, attached: attachments.length, from: cfg.gmailUser });
   } catch (e) {
-    console.error('Email send error:', e.message);
-    res.status(500).json({ error: e.message || 'Failed to send email' });
+    const fullError = e.response?.body ? JSON.stringify(e.response.body) : (e.message || 'Unknown error');
+    console.error('Email send error:', fullError, e.stack || '');
+    res.status(500).json({ error: fullError, code: e.code || '', stack: e.stack || '' });
   }
 });
 
