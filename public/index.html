@@ -782,9 +782,26 @@ async function loadDetailVideoList(customerId, customerName) {
         <span style="font-size:13px;font-weight:600;color:#1e293b;flex:1">🎥 Session ${i+1} — ${v.date} &nbsp;<span style="font-size:12px;color:var(--gray-400)">${v.size}</span></span>
         <a class="btn btn-outline btn-sm" href="/api/video/file/${encodeURIComponent(v.filename)}" target="_blank">▶ Play</a>
         <a class="btn btn-green btn-sm" href="/api/video/download/${encodeURIComponent(v.filename)}" download="VideoSession_${safeCustomerName}_${i+1}.webm">⬇ Download</a>
+        <button class="btn btn-danger btn-sm" onclick="deleteDetailVideo('${customerId}','${v.filename}','${customerName || ''}')">🗑 Delete</button>
       </div>`).join('');
   } catch(e) {
     listEl.innerHTML = '<div style="font-size:13px;color:red">Failed to load video list.</div>';
+  }
+}
+
+async function deleteDetailVideo(customerId, filename, customerName) {
+  if (!confirm('Kya aap ye video session delete karna chahte hain? Ye action undo nahi ho sakta.')) return;
+  try {
+    const res = await fetch('/api/video/' + customerId + '/' + encodeURIComponent(filename), { method: 'DELETE' });
+    const data = await res.json();
+    if (res.ok) {
+      toast('Video delete ho gaya');
+      loadDetailVideoList(customerId, customerName);
+    } else {
+      toast(data.error || 'Delete fail ho gaya');
+    }
+  } catch(e) {
+    toast('Delete fail ho gaya: ' + e.message);
   }
 }
 
@@ -1275,9 +1292,19 @@ loadDashboard();
     document.getElementById('vrec-indicator').style.display = 'flex';
   }
 
+  // Returns a promise that resolves only after onstop has actually built recordedBlob
   function stopRecording() {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
     document.getElementById('vrec-indicator').style.display = 'none';
+    return new Promise(resolve => {
+      if (!mediaRecorder || mediaRecorder.state === 'inactive') return resolve();
+      const rec = mediaRecorder;
+      const prevOnStop = rec.onstop;
+      rec.onstop = (e) => {
+        if (prevOnStop) prevOnStop(e);
+        resolve();
+      };
+      rec.stop();
+    });
   }
 
   async function saveVideo() {
@@ -1397,7 +1424,6 @@ loadDashboard();
       nextBtn.className = 'btn btn-danger btn-sm';
 
     } else if (step.id === 'finish') {
-      stopRecording();
       preview.style.display = 'none';
       playback.style.display = '';
       listSection.style.display = 'block';
@@ -1413,10 +1439,17 @@ loadDashboard();
     }
   }
 
-  function videoNextStep() {
+  async function videoNextStep() {
     if (currentVideoStep === 0) {
       // Step 1 → 2: start recording
       startRecording();
+      currentVideoStep++;
+    } else if (currentVideoStep === 3) {
+      // Step 4 → 5: stop recording FIRST, wait for onstop to build the blob, then render finish step
+      const nextBtn = document.getElementById('vstep-next');
+      nextBtn.disabled = true;
+      await stopRecording();
+      nextBtn.disabled = false;
       currentVideoStep++;
     } else if (currentVideoStep === 4) {
       // Step 5: save
@@ -1429,16 +1462,16 @@ loadDashboard();
     renderStepContent();
   }
 
-  function videoPrevStep() {
+  async function videoPrevStep() {
     if (currentVideoStep <= 0) return;
-    // If going back from finish, restart recording
+    // If going back from finish, restart recording cleanly
     if (currentVideoStep === 4) {
       recordedBlob = null; recordedChunks = [];
       document.getElementById('video-save-status').textContent = '';
       document.getElementById('video-playback').style.display = 'none';
       document.getElementById('video-preview').style.display = '';
-      // Restart recording from step 1
-      stopRecording();
+      // Fully stop and wait before starting a new recorder on the same stream
+      await stopRecording();
       currentVideoStep = 0;
       startRecording();
       currentVideoStep = 1;
@@ -1487,9 +1520,26 @@ loadDashboard();
         <div class="video-list-item">
           <a href="/api/video/file/${encodeURIComponent(v.filename)}" target="_blank">🎥 वीडियो ${i+1} — ${v.date}</a>
           <span style="font-size:12px;color:var(--gray-400)">${v.size}</span>
+          <button class="btn btn-danger btn-sm" style="padding:2px 8px" onclick="deleteModalVideo('${customerId}','${v.filename}')">🗑</button>
         </div>`).join('');
     } catch(e) {
       listEl.innerHTML = '<div style="font-size:13px;color:red">लिस्ट लोड नहीं हुई</div>';
+    }
+  }
+
+  async function deleteModalVideo(customerId, filename) {
+    if (!confirm('क्या आप यह वीडियो सेशन डिलीट करना चाहते हैं? यह वापस नहीं होगा।')) return;
+    try {
+      const res = await fetch('/api/video/' + customerId + '/' + encodeURIComponent(filename), { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok) {
+        toast('वीडियो डिलीट हो गया');
+        loadVideoList(customerId);
+      } else {
+        toast(data.error || 'डिलीट विफल');
+      }
+    } catch(e) {
+      toast('डिलीट विफल: ' + e.message);
     }
   }
 

@@ -455,6 +455,23 @@ app.get('/api/video/file/:filename', (req, res) => {
 });
 
 
+// DELETE /api/video/:customerId/:filename — delete a saved video
+app.delete('/api/video/:customerId/:filename', (req, res) => {
+  const filename = path.basename(req.params.filename); // prevent path traversal
+  const prefix = 'video-' + req.params.customerId + '-';
+  if (!filename.startsWith(prefix) || !filename.endsWith('.webm')) {
+    return res.status(400).json({ error: 'Invalid filename' });
+  }
+  const filePath = path.join(VIDEO_DIR, filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
+  try {
+    fs.unlinkSync(filePath);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message || 'Delete failed' });
+  }
+});
+
 // Listen on all interfaces so any device on the same LAN can connect
 app.listen(PORT, '0.0.0.0', () => {
   console.log('\n===========================================');
