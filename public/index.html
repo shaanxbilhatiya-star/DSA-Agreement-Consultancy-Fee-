@@ -346,9 +346,9 @@ textarea { resize: vertical; min-height: 70px; }
 
       <!-- UPLOAD RECEIPT PDF -->
       <div class="card" style="margin-top:16px">
-        <div class="card-header"><h2>Signed Receipt (&#8377;500 Consultation Fee)</h2></div>
+        <div class="card-header"><h2>Signed Consultation Receipt</h2></div>
         <div style="padding:20px">
-          <p style="font-size:13px;color:var(--gray-600);margin-bottom:14px">Upload the signed consultation fee receipt (PDF only, max 10MB).</p>
+          <p style="font-size:13px;color:var(--gray-600);margin-bottom:14px">Upload the signed consultation acknowledgement receipt (PDF only, max 10MB).</p>
           <div id="receipt-upload-area" class="upload-area">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:36px;height:36px;color:var(--gray-400);margin-bottom:8px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
             <p style="font-size:14px;color:var(--gray-600);margin-bottom:8px">Click to select or drag a PDF file here</p>
@@ -920,8 +920,8 @@ function sendEmailToCustomer() {
     attachmentNote += '📎 Signed Loan Agreement (attached)\n';
   }
   if (c.receiptPdf) {
-    attachments.push({ name: '₹500 Receipt', file: c.receiptPdf });
-    attachmentNote += '📎 ₹500 Consultation Fee Receipt (attached)\n';
+    attachments.push({ name: ' Receipt', file: c.receiptPdf });
+    attachmentNote += '📎 Consultation Acknowledgement Receipt (attached)\n';
   }
   if (!attachmentNote) {
     attachmentNote = '(No signed documents uploaded yet)\n';
@@ -944,7 +944,7 @@ This email confirms that we have received your loan consultation application wit
 • Date: ${dateStr}
 • Receipt No: ${receiptNo}
 • Requested Loan Amount: ${loanAmt}
-• Consultation Fee: ₹500 (Paid)
+• Consultation Fee:  (Paid)
 • Payment Mode: ${c.payMode || '—'}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
