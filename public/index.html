@@ -1084,37 +1084,57 @@ async function deleteReceiptPdf(customerId) {
 }
 
 // ===== SEND EMAIL =====
-function sendEmailToCustomer() {
+async function sendEmailToCustomer() {
   if (!currentCustomer) { toast('No customer selected'); return; }
   const c = currentCustomer;
   const fromEmail = 'controlcenter@ruralift.com';
   const customerName = c.name || 'Valued Customer';
   const loanAmt = c.loanAmt ? 'रु. ' + Number(c.loanAmt).toLocaleString('en-IN') : 'N/A';
+  const successFeeStr = c.successFee ? 'रु. ' + Number(c.successFee).toLocaleString('en-IN') + ' (Paid)' : '(Paid)';
   const receiptNo = c.receiptNo || 'N/A';
   const dateStr = c.date ? fmtDate(c.date) : new Date().toLocaleDateString('hi-IN');
+
+  // Check for recorded video sessions before building the email
+  let videoCount = 0;
+  let latestVideo = null;
+  try {
+    const vRes = await fetch('/api/video/' + c.id + '/list');
+    const vData = await vRes.json();
+    if (vData.videos && vData.videos.length > 0) {
+      videoCount = vData.videos.length;
+      latestVideo = vData.videos[0]; // list is newest-first
+    }
+  } catch (e) { /* ignore — treat as no video */ }
 
   // Build attachment info for email body
   let attachmentNote = '';
   const attachments = [];
   if (c.agreementPdf) {
-    attachments.push({ name: 'Signed Agreement', file: c.agreementPdf });
-    attachmentNote += '📎 Signed Loan Agreement (attached)\n';
+    attachments.push({ name: 'Signed Agreement', file: c.agreementPdf, type: 'pdf' });
+    attachmentNote += '📄 Signed Loan Agreement (attached)\n';
+  } else {
+    attachmentNote += '❌ Signed Loan Agreement — NOT uploaded yet\n';
   }
   if (c.receiptPdf) {
-    attachments.push({ name: ' Receipt', file: c.receiptPdf });
-    attachmentNote += '📎 Consultation Acknowledgement Receipt (attached)\n';
+    attachments.push({ name: 'Receipt', file: c.receiptPdf, type: 'pdf' });
+    attachmentNote += '📄 Consultation Fee Receipt (attached)\n';
+  } else {
+    attachmentNote += '❌ Consultation Fee Receipt — NOT uploaded yet\n';
   }
-  if (!attachmentNote) {
-    attachmentNote = '(No signed documents uploaded yet)\n';
+  if (latestVideo) {
+    attachments.push({ name: 'Video Verification', file: latestVideo.filename, type: 'video' });
+    attachmentNote += `🎥 Recorded Video Session (attached${videoCount > 1 ? ', latest of ' + videoCount : ''})\n`;
+  } else {
+    attachmentNote += '❌ Recorded Video Session — NOT recorded yet\n';
   }
 
-  const subject = encodeURIComponent(`Ruralift Consultancy - Loan Application Confirmation | ${customerName}`);
+  const subject = encodeURIComponent(`Ruralift Consultancy - Agreement Signed & Verified | ${customerName}`);
   const body = encodeURIComponent(
 `Dear ${customerName},
 
 Greetings from Ruralift Consultancy!
 
-This email confirms that we have received your loan consultation application with the following details:
+This email confirms that your loan consultation agreement has been signed and successfully video-verified with Ruralift Consultancy. Your application is now on file and ready for processing.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 Application Details:
@@ -1125,7 +1145,7 @@ This email confirms that we have received your loan consultation application wit
 • Date: ${dateStr}
 • Receipt No: ${receiptNo}
 • Requested Loan Amount: ${loanAmt}
-• Consultation Fee:  (Paid)
+• Consultation Fee: ${successFeeStr}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📎 Attached Documents:
@@ -1134,9 +1154,10 @@ ${attachmentNote}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📌 Next Steps:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-1. Our team will review your application within 2-3 business days.
-2. You will receive a call from our loan processing team.
-3. Please keep your original documents ready for verification.
+1. Your signed agreement and video verification have been successfully recorded with us.
+2. Our team will now process your application within 2-3 business days.
+3. You will receive a call from our loan processing team regarding further steps.
+4. Please keep your original documents ready for verification when contacted.
 
 If you have any questions, please contact us at:
 📞 Phone: controlcenter@ruralift.com
@@ -1152,9 +1173,10 @@ This is an auto-generated email from Ruralift CRM.
 `);
 
   // Auto-download the uploaded PDFs so user can attach them in Gmail
-  if (attachments.length > 0) {
+  const pdfAttachments = attachments.filter(a => a.type === 'pdf');
+  if (pdfAttachments.length > 0) {
     toast('Downloading PDFs for attachment...');
-    attachments.forEach((att, i) => {
+    pdfAttachments.forEach((att, i) => {
       setTimeout(() => {
         const link = document.createElement('a');
         link.href = '/uploads/' + att.file;
@@ -1167,11 +1189,26 @@ This is an auto-generated email from Ruralift CRM.
     });
   }
 
+  // Auto-download the latest video too, so it's ready to drag into Gmail
+  const videoAttachment = attachments.find(a => a.type === 'video');
+  if (videoAttachment) {
+    setTimeout(() => {
+      const link = document.createElement('a');
+      link.href = '/api/video/download/' + encodeURIComponent(videoAttachment.file);
+      link.download = 'VideoVerification - ' + customerName + '.webm';
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }, pdfAttachments.length * 500 + 300);
+  }
+
   // Open Gmail compose in new tab (after brief delay to let downloads start)
+  const totalDownloads = pdfAttachments.length + (videoAttachment ? 1 : 0);
   setTimeout(() => {
     const mailtoUrl = `https://mail.google.com/mail/?view=cm&fs=1&from=${encodeURIComponent(fromEmail)}&to=&su=${subject}&body=${body}`;
     window.open(mailtoUrl, '_blank');
-  }, attachments.length > 0 ? 800 : 0);
+  }, totalDownloads > 0 ? 800 : 0);
 }
 
 // ===== PRINT =====
