@@ -16,6 +16,36 @@
 
 <!-- jsPDF for client-side PDF generation -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+// Mobile/Tablet only — block desktop browsers
+(function() {
+  var w = window.innerWidth || document.documentElement.clientWidth;
+  var ua = navigator.userAgent || '';
+  var isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(ua);
+  // Allow if mobile UA or screen width <= 1024px (tablet threshold)
+  if (!isMobileUA && w > 1024) {
+    document.documentElement.innerHTML = `
+      <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>Mobile Only — Ruralift</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #0d0a1a, #1e1b4b); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .box { background: rgba(255,255,255,.06); border: 1px solid rgba(139,92,246,.3); border-radius: 20px; padding: 48px 40px; text-align: center; max-width: 420px; box-shadow: 0 8px 40px rgba(0,0,0,.4); }
+        .icon { font-size: 56px; margin-bottom: 20px; }
+        h1 { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 10px; letter-spacing: -.02em; }
+        p { font-size: 15px; color: rgba(255,255,255,.6); line-height: 1.6; margin-bottom: 28px; }
+        a { display: inline-block; background: linear-gradient(135deg, #6d28d9, #7c3aed); color: #fff; text-decoration: none; padding: 12px 28px; border-radius: 12px; font-size: 14px; font-weight: 600; box-shadow: 0 4px 16px rgba(109,40,217,.4); }
+        a:hover { background: linear-gradient(135deg, #4c1d95, #6d28d9); }
+      </style></head>
+      <body><div class="box">
+        <div class="icon">📱</div>
+        <h1>Mobile & Tablet Only</h1>
+        <p>This page is designed for document scanning on mobile or tablet devices. Please open it on your phone or tablet.</p>
+        <a href="/">← Go Back to CRM</a>
+      </div></body></html>`;
+  }
+})();
+</script>
 
 <style>
 /* ===== RESET & BASE ===== */
