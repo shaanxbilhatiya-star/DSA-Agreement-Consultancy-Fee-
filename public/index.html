@@ -1128,13 +1128,13 @@ async function sendEmailToCustomer() {
     attachmentNote += '❌ Recorded Video Session — NOT recorded yet\n';
   }
 
-  const subject = encodeURIComponent(`Ruralift Consultancy - Agreement Signed & Verified | ${customerName}`);
+  const subject = encodeURIComponent(`Ruralift - Agreement Signed & Verified | ${customerName}`);
   const body = encodeURIComponent(
 `Dear ${customerName},
 
-Greetings from Ruralift Consultancy!
+Greetings from Ruralift!
 
-This email confirms that your loan consultation agreement has been signed and successfully video-verified with Ruralift Consultancy. Your application is now on file and ready for processing.
+This email confirms that your loan consultation agreement has been signed and successfully video-verified with Ruralift. Your application is now on file and ready for processing.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 Application Details:
@@ -1161,13 +1161,15 @@ ${attachmentNote}
 
 If you have any questions, please contact us at:
 📞 Phone: controlcenter@ruralift.com
-🏢 Ruralift Consultancy
+🏢 Ruralift
 
 Thank you for choosing Ruralift!
 
 Warm Regards,
-Ruralift Consultancy Team
+Ruralift Team
 controlcenter@ruralift.com
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+This is an electronically generated email and does not require a reply. This email, along with its attachments (signed agreement and video verification), serves as a digital record of your consent and verification with Ruralift.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 This is an auto-generated email from Ruralift CRM.
 `);
