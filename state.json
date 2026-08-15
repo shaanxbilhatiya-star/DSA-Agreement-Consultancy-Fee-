@@ -1,6 +1,28 @@
 {
   "customers": [
     {
+      "id": "1786810000004",
+      "createdAt": "2026-08-15T14:00:00.000Z",
+      "name": "Prakash Singh Thakur",
+      "mobile": "9755123456",
+      "aadhaar": "3456 7890 1234",
+      "email": "prakash.thakur@gmail.com",
+      "date": "2026-08-15",
+      "place": "Mandla",
+      "address": "Village Bijadandi, Post Bijadandi, Tehsil Mandla, Mandla, MP - 481661",
+      "receiptNo": "RL-2026-003",
+      "loanAmt": "1000000",
+      "loanAmtWords": "दस लाख मात्र",
+      "successFee": "30000",
+      "successFeeWords": "तीस हजार मात्र",
+      "chequeNo": "012345",
+      "chequeBankBranch": "Central Bank of India, Mandla Branch",
+      "chequeHolder": "Prakash Singh Thakur",
+      "chequeAmt": "30000",
+      "chequeDate": "2027-01-15",
+      "notes": "Business loan for kirana shop expansion. Documents complete."
+    },
+    {
       "id": "1786800000002",
       "createdAt": "2026-08-15T12:00:00.000Z",
       "name": "Mohan Lal Yadav",
