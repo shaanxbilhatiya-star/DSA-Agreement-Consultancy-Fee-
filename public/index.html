@@ -353,15 +353,16 @@ textarea { resize: vertical; min-height: 70px; }
 .toast.show { opacity: 1; transform: translateY(0); }
 
 /* ===== PDF BADGE ===== */
-.badge-pdf { background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #15803d; font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 700; display: inline-flex; align-items: center; gap: 3px; border: 1px solid #86efac; box-shadow: 0 1px 2px rgba(22,163,74,.12); }
-.badge-pdf svg { width: 11px; height: 11px; }
-.badge-video {
-  background: linear-gradient(135deg, #ede9fe, #ddd6fe); color: var(--p2);
-  font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 700;
-  display: inline-flex; align-items: center; gap: 3px;
-  border: 1px solid #c4b5fd; box-shadow: 0 1px 2px rgba(109,40,217,.12);
+.status-dot {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  font-size: 9px; font-weight: 800; letter-spacing: 0; cursor: default;
+  flex-shrink: 0;
 }
-.badge-video svg { width: 11px; height: 11px; }
+.dot-agreement { background: #dcfce7; color: #15803d; border: 1.5px solid #86efac; }
+.dot-receipt   { background: #dbeafe; color: #1d4ed8; border: 1.5px solid #93c5fd; }
+.dot-video     { background: #ede9fe; color: #7c3aed; border: 1.5px solid #c4b5fd; }
+.dot-empty     { background: #f1f5f9; color: #cbd5e1; border: 1.5px solid #e2e8f0; }
 
 /* ===== ACTION BUTTONS LAYOUT ===== */
 .actions-cell { display: flex; justify-content: space-between; align-items: center; gap: 6px; min-width: 200px; }
@@ -918,11 +919,11 @@ async function loadCustomers(q = '') {
 function rowHtml(c, showLoan = false, hasVideo = false) {
   const loan = showLoan ? `<td>${c.loanAmt ? 'रु. ' + Number(c.loanAmt).toLocaleString('en-IN') : '—'}</td>` : '';
   const fee = showLoan ? `<td>${c.successFee ? 'रु. ' + Number(c.successFee).toLocaleString('en-IN') : '—'}</td>` : '';
-  const pdfBadge = c.agreementPdf ? `<span class="badge-pdf"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>Agreement</span> ` : '';
-  const receiptBadge = c.receiptPdf ? `<span class="badge-pdf"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Receipt</span> ` : '';
-  const videoBadge = hasVideo ? `<span class="badge-video"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/></svg>Video</span> ` : '';
+  const pdfDot = c.agreementPdf ? `<span class="status-dot dot-agreement" title="Agreement uploaded">A</span>` : `<span class="status-dot dot-empty" title="No Agreement">A</span>`;
+  const receiptDot = c.receiptPdf ? `<span class="status-dot dot-receipt" title="Receipt uploaded">R</span>` : `<span class="status-dot dot-empty" title="No Receipt">R</span>`;
+  const videoDot = hasVideo ? `<span class="status-dot dot-video" title="Video recorded">V</span>` : `<span class="status-dot dot-empty" title="No Video">V</span>`;
   return `<tr>
-    <td><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start"><strong>${c.name || '—'}</strong><div style="display:flex;gap:4px;flex-wrap:wrap">${pdfBadge}${receiptBadge}${videoBadge}</div></div></td>
+    <td><div style="display:flex;align-items:center;gap:8px"><strong style="white-space:nowrap">${c.name || '—'}</strong><div style="display:flex;gap:3px">${pdfDot}${receiptDot}${videoDot}</div></div></td>
     <td>${c.mobile || '—'}</td>
     <td>${c.aadhaar || '—'}</td>
     ${loan}
