@@ -6,14 +6,19 @@ const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const STATE_FILE = path.join(__dirname, 'state.json');
-const CONFIG_FILE = path.join(__dirname, 'config.json');
-const UPLOADS_DIR = path.join(__dirname, 'uploads');
+// ── Persistent storage ─────────────────────────────────────────
+// On Railway: set RAILWAY_VOLUME_MOUNT_PATH env var to your volume mount path (e.g. /data)
+// Locally: falls back to the project folder as before
+const DATA_DIR = process.env.RAILWAY_VOLUME_MOUNT_PATH
+  ? path.join(process.env.RAILWAY_VOLUME_MOUNT_PATH)
+  : __dirname;
 
-// Ensure uploads directory exists
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
+const STATE_FILE  = path.join(DATA_DIR, 'state.json');
+const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
+const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
+
+// Ensure directories exist
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 // Simple multipart/form-data parser for single PDF file upload
 function parseMultipart(req) {
@@ -258,7 +263,7 @@ app.delete('/api/customers/:id/receipt', (req, res) => {
 
 
 // ===== VIDEO VERIFICATION ROUTES =====
-const VIDEO_DIR = path.join(__dirname, 'uploads', 'videos');
+const VIDEO_DIR = path.join(UPLOADS_DIR, 'videos');
 if (!fs.existsSync(VIDEO_DIR)) fs.mkdirSync(VIDEO_DIR, { recursive: true });
 
 // Simple multipart parser for video/webm blobs (reuses same pattern as PDF upload)
