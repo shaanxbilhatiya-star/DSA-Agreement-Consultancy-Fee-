@@ -419,10 +419,16 @@ textarea { resize: vertical; min-height: 70px; }
               </div>
             </div>
           </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <button class="btn btn-primary" id="send-email-btn" onclick="sendEmailToCustomer()" style="background:#1d4ed8;font-size:15px;padding:10px 24px">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            Send Email to Customer
+            📧 Send Email to Customer
           </button>
+          <button onclick="openEmailSettings()" title="Gmail Settings"
+            style="padding:10px 16px;border:1px solid #d1d5db;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;color:#374151;">
+            ⚙️ Gmail Setup
+          </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1111,49 +1117,33 @@ async function deleteReceiptPdf(customerId) {
 async function sendEmailToCustomer() {
   if (!currentCustomer) { toast('No customer selected'); return; }
   const c = currentCustomer;
-  const fromEmail = 'controlcenter@ruralift.com';
+
+  // Check Gmail is configured
+  const cfgCheck = await fetch('/api/email-config').then(r => r.json());
+  if (!cfgCheck.gmailUser || !cfgCheck.hasPassword) {
+    toast('⚠️ Gmail not set up — opening settings…');
+    setTimeout(() => openEmailSettings(), 600);
+    return;
+  }
+
+  const toEmail = c.email || c.mobile + '@sms.example.com';
+  // Prompt for recipient email
+  const recipient = prompt(`Send email to (customer's Gmail):`, c.email || '');
+  if (!recipient || !recipient.includes('@')) { toast('Valid email required'); return; }
+
   const customerName = c.name || 'Valued Customer';
   const loanAmt = c.loanAmt ? 'रु. ' + Number(c.loanAmt).toLocaleString('en-IN') : 'N/A';
   const successFeeStr = c.successFee ? 'रु. ' + Number(c.successFee).toLocaleString('en-IN') : 'N/A';
   const receiptNo = c.receiptNo || 'N/A';
   const dateStr = c.date ? fmtDate(c.date) : new Date().toLocaleDateString('hi-IN');
 
-  // Check for recorded video sessions before building the email
-  let videoCount = 0;
-  let latestVideo = null;
-  try {
-    const vRes = await fetch('/api/video/' + c.id + '/list');
-    const vData = await vRes.json();
-    if (vData.videos && vData.videos.length > 0) {
-      videoCount = vData.videos.length;
-      latestVideo = vData.videos[0]; // list is newest-first
-    }
-  } catch (e) { /* ignore — treat as no video */ }
-
-  // Build attachment info for email body
+  // Build attachment notes
   let attachmentNote = '';
-  const attachments = [];
-  if (c.agreementPdf) {
-    attachments.push({ name: 'Signed Agreement', file: c.agreementPdf, type: 'pdf' });
-    attachmentNote += '📄 Signed Loan Agreement (attached)\n';
-  } else {
-    attachmentNote += '❌ Signed Loan Agreement — NOT uploaded yet\n';
-  }
-  if (c.receiptPdf) {
-    attachments.push({ name: 'Receipt', file: c.receiptPdf, type: 'pdf' });
-    attachmentNote += '📄 Consultation Fee Receipt (attached)\n';
-  } else {
-    attachmentNote += '❌ Consultation Fee Receipt — NOT uploaded yet\n';
-  }
-  if (latestVideo) {
-    attachments.push({ name: 'Video Verification', file: latestVideo.filename, type: 'video' });
-    attachmentNote += `🎥 Recorded Video Session (attached${videoCount > 1 ? ', latest of ' + videoCount : ''})\n`;
-  } else {
-    attachmentNote += '❌ Recorded Video Session — NOT recorded yet\n';
-  }
+  attachmentNote += c.agreementPdf ? '📄 Signed Loan Agreement (attached)\n' : '❌ Signed Loan Agreement — NOT uploaded yet\n';
+  attachmentNote += c.receiptPdf  ? '📄 Consultation Fee Receipt (attached)\n' : '❌ Consultation Fee Receipt — NOT uploaded yet\n';
 
-  const subject = encodeURIComponent(`Ruralift - Agreement Signed & Verified | ${customerName}`);
-  const body = encodeURIComponent(
+  const subject = `Ruralift - Agreement Signed & Verified | ${customerName}`;
+  const body =
 `Dear ${customerName},
 
 Greetings from Ruralift!
@@ -1193,50 +1183,81 @@ Warm Regards,
 Ruralift Team
 controlcenter@ruralift.com
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-This is an electronically generated email and does not require a reply. This email, along with its attachments (signed agreement and video verification), serves as a digital record of your consent and verification with Ruralift.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-This is an auto-generated email from Ruralift CRM.
-`);
+This is an electronically generated email. This email, along with its attachments, serves as a digital record of your consent and verification with Ruralift.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
-  // Auto-download the uploaded PDFs so user can attach them in Gmail
-  const pdfAttachments = attachments.filter(a => a.type === 'pdf');
-  if (pdfAttachments.length > 0) {
-    toast('Downloading PDFs for attachment...');
-    pdfAttachments.forEach((att, i) => {
-      setTimeout(() => {
-        const link = document.createElement('a');
-        link.href = '/uploads/' + att.file;
-        link.download = att.name.replace(/[^a-zA-Z0-9₹ ]/g, '') + ' - ' + customerName + '.pdf';
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }, i * 500); // stagger downloads
+  const btn = document.getElementById('send-email-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Sending…'; }
+  toast('📤 Sending email with attachments…');
+
+  try {
+    const result = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customerId: c.id, toEmail: recipient, subject, body })
     });
+    const data = await result.json();
+    if (!result.ok) throw new Error(data.error || 'Send failed');
+    toast(`✅ Email sent! (${data.attached} file${data.attached !== 1 ? 's' : ''} attached automatically)`);
+  } catch (e) {
+    toast('❌ ' + (e.message || 'Email failed'));
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📧 Send Email to Customer'; }
   }
-
-  // Auto-download the latest video too, so it's ready to drag into Gmail
-  const videoAttachment = attachments.find(a => a.type === 'video');
-  if (videoAttachment) {
-    setTimeout(() => {
-      const link = document.createElement('a');
-      link.href = '/api/video/download/' + encodeURIComponent(videoAttachment.file);
-      link.download = 'VideoVerification - ' + customerName + '.webm';
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }, pdfAttachments.length * 500 + 300);
-  }
-
-  // Open Gmail compose in new tab (after brief delay to let downloads start)
-  const totalDownloads = pdfAttachments.length + (videoAttachment ? 1 : 0);
-  setTimeout(() => {
-    const mailtoUrl = `https://mail.google.com/mail/?view=cm&fs=1&from=${encodeURIComponent(fromEmail)}&to=&su=${subject}&body=${body}`;
-    window.open(mailtoUrl, '_blank');
-  }, totalDownloads > 0 ? 800 : 0);
 }
 
+// ===== EMAIL SETTINGS MODAL =====
+async function openEmailSettings() {
+  const cfg = await fetch('/api/email-config').then(r => r.json());
+  const html = `
+    <div id="email-settings-overlay" style="
+      position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;
+      display:flex;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:14px;padding:32px;width:420px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+        <h3 style="margin:0 0 6px;font-size:18px;color:#1e293b;">⚙️ Gmail Settings</h3>
+        <p style="margin:0 0 20px;font-size:13px;color:#64748b;">
+          Email files ko automatically attach karne ke liye Gmail App Password chahiye.<br>
+          <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:#7c3aed;">
+            App Password kaise banayein? →
+          </a>
+        </p>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">Gmail Address</label>
+        <input id="es-user" type="email" value="${cfg.gmailUser || ''}" placeholder="controlcenter@ruralift.com"
+          style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-bottom:14px;box-sizing:border-box;">
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:4px;">
+          Gmail App Password <span style="font-weight:400;color:#9ca3af;">(16-character, no spaces)</span>
+        </label>
+        <input id="es-pass" type="password" placeholder="${cfg.hasPassword ? '●●●● saved — enter new to change ●●●●' : 'xxxx xxxx xxxx xxxx'}"
+          style="width:100%;padding:9px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;margin-bottom:20px;box-sizing:border-box;">
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button onclick="document.getElementById('email-settings-overlay').remove()"
+            style="padding:9px 20px;border:1px solid #d1d5db;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;">Cancel</button>
+          <button onclick="saveEmailSettings()"
+            style="padding:9px 20px;border:none;border-radius:8px;background:#7c3aed;color:#fff;cursor:pointer;font-size:14px;font-weight:600;">Save Settings</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+async function saveEmailSettings() {
+  const user = document.getElementById('es-user').value.trim();
+  const pass = document.getElementById('es-pass').value.trim();
+  if (!user) { alert('Gmail address required'); return; }
+  const body = { gmailUser: user };
+  if (pass) body.gmailPass = pass.replace(/\s/g, '');
+  const r = await fetch('/api/email-config', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (r.ok) {
+    document.getElementById('email-settings-overlay').remove();
+    toast('✅ Gmail settings saved!');
+  } else {
+    const d = await r.json();
+    alert('Error: ' + (d.error || 'Save failed'));
+  }
+}
 // ===== PRINT =====
 
 function printReceipt(c) {
